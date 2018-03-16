@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Album One</string>
+    <string name="title_activity_albums">Albums</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_close">Close</string>
+    <string name="action_save">Save</string>
+    <string name="action_download">Download</string>
+    <string name="gallery_photo">Gallery photo</string>
+    <string name="photo">Photo</string>
+</resources>
