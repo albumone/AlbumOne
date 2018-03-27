@@ -103,12 +103,14 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Intent intent;
+
         switch (item.getItemId()) {
-            case R.id.action_save:
+            case R.id.action_download:
                 //mPresenter.downloadAlbum();
                 //finish();
 
-                Intent intent = new Intent(getContext(), DownloadService.class);
+                intent = new Intent(getContext(), DownloadService.class);
                 intent.putExtra(DownloadService.EXTRA_ALBUM, Parcels.wrap(mAlbum));
                 Context context = getContext();
                 if (context != null) {
@@ -124,6 +126,11 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
                 }
 
                 return true;
+
+            case R.id.action_slideshow:
+                mPresenter.startSlideshow(mPhotosAdapter.getPhotos());
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -161,6 +168,14 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         intent.putExtra(GalleryActivity.EXTRA_ALBUM, Parcels.wrap(album));
         intent.putExtra(GalleryActivity.EXTRA_PHOTOS, Parcels.wrap(photos));
         intent.putExtra(GalleryActivity.EXTRA_POSITION, position);
+        startActivity(intent);
+    }
+
+    @Override
+    public void openSlideshow(List<Photo> photos) {
+        Intent intent = new Intent(getContext(), GalleryActivity.class);
+        intent.putExtra(GalleryActivity.EXTRA_PHOTOS, Parcels.wrap(photos));
+        intent.putExtra(GalleryActivity.EXTRA_IS_SLIDESHOw, true);
         startActivity(intent);
     }
 

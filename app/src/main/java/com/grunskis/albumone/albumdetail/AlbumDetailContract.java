@@ -17,11 +17,15 @@ public interface AlbumDetailContract {
         void showAlbumAlbumDownloadStarted();
 
         void showPhotoGallery(Album album, List<Photo> photos, int position);
+
+        void openSlideshow(List<Photo> photos);
     }
     interface Presenter extends BasePresenter {
         void loadAlbumPhotos(int page);
 
         //void downloadAlbum();
         void openPhotoGallery(Album album, List<Photo> photos, int position);
+
+        void startSlideshow(List<Photo> photos);
     }
 }

@@ -22,6 +22,7 @@ import org.parceler.Parcels;
 
 import timber.log.Timber;
 
+// TODO: 3/27/2018 restore recycler view state on rotation
 public class AlbumDetailActivity extends AppCompatActivity {
     public static final String EXTRA_ALBUM = "com.grunskis.albumone.albumdetail.EXTRA_ALBUM";
     public static final String EXTRA_LOCAL_ONLY = "com.grunskis.albumone.albumdetail.EXTRA_LOCAL_ONLY";
@@ -32,12 +33,16 @@ public class AlbumDetailActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+
+        int resourceId;
         if (mShowLocalOnly) {
-            return super.onCreateOptionsMenu(menu);
+            resourceId = R.menu.menu_album_detail_local;
+        } else {
+            resourceId = R.menu.menu_album_detail_remote;
         }
 
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_album_detail, menu);
+        inflater.inflate(resourceId, menu);
         return true;
     }
 

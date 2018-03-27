@@ -27,9 +27,11 @@ class GalleryAdapter extends PagerAdapter {
     private Context mContext;
     private List<Photo> mPhotos;
     private int mDisplayWidth;
+    private View.OnClickListener mClickListener;
 
-    GalleryAdapter(Context context) {
+    GalleryAdapter(Context context, View.OnClickListener clickListener) {
         mContext = context;
+        mClickListener = clickListener;
 
         OkHttpClient.Builder builder = StethoUtil.addNetworkInterceptor(
                 new OkHttpClient.Builder());
@@ -67,6 +69,8 @@ class GalleryAdapter extends PagerAdapter {
                     .resize(mDisplayWidth, 0)
                     .into(imageView);
         }
+
+        layout.setOnClickListener(mClickListener);
 
         container.addView(layout);
         return layout;

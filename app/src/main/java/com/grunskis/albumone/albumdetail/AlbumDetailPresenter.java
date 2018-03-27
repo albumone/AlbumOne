@@ -58,4 +58,9 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter,
     public void openPhotoGallery(Album album, List<Photo> photos, int position) {
         mView.showPhotoGallery(album, photos, position);
     }
+
+    @Override
+    public void startSlideshow(List<Photo> photos) {
+        mView.openSlideshow(photos);
+    }
 }
