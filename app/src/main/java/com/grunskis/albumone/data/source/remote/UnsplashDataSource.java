@@ -26,6 +26,8 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 import timber.log.Timber;
 
+import static java.lang.Math.round;
+
 public class UnsplashDataSource implements RemoteDataSource {
     private static final int REGULAR_PHOTO_WIDTH = 1080;
 
@@ -44,8 +46,8 @@ public class UnsplashDataSource implements RemoteDataSource {
     }
 
     private int calcPhotoHeight(int fullWidth, int fullHeight) {
-        float ratio = (float) fullWidth / (float) REGULAR_PHOTO_WIDTH;
-        return (int) ((float) fullHeight / ratio);
+        float ratio = (float) fullWidth / REGULAR_PHOTO_WIDTH;
+        return round((float) fullHeight / ratio);
     }
 
     private UnsplashApi getApiClient() {
@@ -174,18 +176,6 @@ public class UnsplashDataSource implements RemoteDataSource {
             this.small = small;
         }
     }
-
-//    static class CoverPhoto {
-//        public final Urls urls;
-//        public int width;
-//        public int height;
-//
-//        public CoverPhoto(Urls urls, int width, int height) {
-//            this.urls = urls;
-//            this.width = width;
-//            this.height = height;
-//        }
-//    }
 
     static class Collection {
         public final String id;

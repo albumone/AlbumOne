@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.grunskis.albumone.DisplayHelpers;
 import com.grunskis.albumone.EndlessRecyclerViewScrollListener;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.albumdetail.AlbumDetailActivity;
@@ -190,10 +191,8 @@ public class AlbumsFragment extends Fragment implements AlbumsContract.View, Alb
             final Album album = mAlbums.get(position);
             Photo coverPhoto = album.getCoverPhoto();
 
-            // TODO: 3/23/2018 fix of by "one" issue where photo apears to be a bit smaller that the display widht
-            // set height of the photo so that the width matches display width
-            float aspectRatio = (float) mDisplayWidth / (float) coverPhoto.getWidth();
-            holder.itemView.getLayoutParams().height = (int) (coverPhoto.getHeight() * aspectRatio);
+            holder.itemView.getLayoutParams().height = DisplayHelpers.calculateOptimalPhotoHeight(
+                    mDisplayWidth, coverPhoto);
 
             String localPath = coverPhoto.getDownloadPath();
             if (localPath != null && localPath.length() > 0) {

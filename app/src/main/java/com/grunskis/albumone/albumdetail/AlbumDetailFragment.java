@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
+import com.grunskis.albumone.DisplayHelpers;
 import com.grunskis.albumone.EndlessRecyclerViewScrollListener;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.data.Album;
@@ -226,8 +227,8 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
 
             // calculate the resulting height of the image manually and set it to the item view
             // to avoid the flaky behaviour when the images are being loaded and resized by picasso
-            float aspectRatio = (float) mDisplayWidth / (float) photo.getWidth();
-            holder.itemView.getLayoutParams().height = (int) (photo.getHeight() * aspectRatio);
+            holder.itemView.getLayoutParams().height = DisplayHelpers.calculateOptimalPhotoHeight(
+                    mDisplayWidth, photo);
 
             String localPath = photo.getDownloadPath();
             if (localPath != null && localPath.length() > 0) {
