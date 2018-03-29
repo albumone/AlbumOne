@@ -47,7 +47,9 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter,
     }
 
     public void loadAlbumPhotos(int page) {
-        mView.setLoadingIndicator(true);
+        if (page == 1) {
+            mView.setLoadingIndicator(true);
+        }
         mRepository.getAlbumPhotos(mAlbum, page, this);
     }
 

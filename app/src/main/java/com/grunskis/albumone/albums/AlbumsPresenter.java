@@ -32,7 +32,9 @@ public class AlbumsPresenter implements AlbumsContract.Presenter,
 
     @Override
     public void loadAlbums(int page) {
-        mAlbumsView.setLoadingIndicator(true);
+        if (page == 1) {
+            mAlbumsView.setLoadingIndicator(true);
+        }
         mAlbumsRepository.getAlbums(page, this);
     }
 
