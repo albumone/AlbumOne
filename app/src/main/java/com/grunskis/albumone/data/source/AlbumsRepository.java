@@ -1,6 +1,7 @@
 package com.grunskis.albumone.data.source;
 
 import com.grunskis.albumone.data.Album;
+import com.grunskis.albumone.data.Download;
 import com.grunskis.albumone.data.Photo;
 import com.grunskis.albumone.data.source.local.LocalDataSource;
 
@@ -85,5 +86,9 @@ public class AlbumsRepository {
                 callback.onDataNotAvailable();
             }
         });
+    }
+
+    public Download getDownload(String albumRemoteId) {
+        return mLocalDataSource.getDownload(albumRemoteId);
     }
 }

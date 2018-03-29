@@ -15,10 +15,14 @@ public interface AlbumsContract {
         void showAlbumDetails(Album album);
 
         void resetAlbums();
+
+        void updateAlbum(Album album);
     }
 
     interface Presenter extends BasePresenter {
         void loadAlbums(int page);
         void openAlbumDetails(Album album);
+
+        void onAlbumDownloaded(Album album);
     }
 }

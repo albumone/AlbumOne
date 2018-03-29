@@ -11,7 +11,7 @@
         android:id="@+id/iv_cover_photo"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:contentDescription="Album cover photo"
+        android:contentDescription="@string/album_cover_photo"
         android:scaleType="centerCrop"
         tools:src="@tools:sample/backgrounds/scenic"
         />
@@ -22,10 +22,31 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="36dp"
         android:textColor="@android:color/white"
         android:textSize="22sp"
         tools:text="@tools:sample/last_names"
         />
+
+    <ImageView
+        android:id="@+id/iv_backend_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="17dp"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@string/backend_logo"
+        android:visibility="invisible"
+        tools:src="@drawable/ic_google_photos_24dp" />
+
+    <ProgressBar
+        android:id="@+id/pb_album_downoading"
+        style="@style/AppTheme.DownloadProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="17dp"
+        android:layout_marginStart="8dp"
+        android:visibility="invisible" />
 
 </FrameLayout>

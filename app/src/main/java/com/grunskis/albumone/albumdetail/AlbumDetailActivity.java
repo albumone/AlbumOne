@@ -6,8 +6,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuInflater;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.data.Album;
@@ -27,30 +27,17 @@ public class AlbumDetailActivity extends AppCompatActivity {
     public static final String EXTRA_ALBUM = "com.grunskis.albumone.albumdetail.EXTRA_ALBUM";
     public static final String EXTRA_LOCAL_ONLY = "com.grunskis.albumone.albumdetail.EXTRA_LOCAL_ONLY";
 
-    //private AlbumDetailPresenter mPresenter;
     private Album mAlbum;
     private boolean mShowLocalOnly;
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-
-        int resourceId;
-        if (mShowLocalOnly) {
-            resourceId = R.menu.menu_album_detail_local;
-        } else {
-            resourceId = R.menu.menu_album_detail_remote;
-        }
-
-        inflater.inflate(resourceId, menu);
-        return true;
-    }
+    private ProgressBar mDownloadProgressBar;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_album_detail);
+
+        mDownloadProgressBar = findViewById(R.id.download_progressbar);
 
         if (savedInstanceState != null) {
             Timber.w("savedInstanceState");
@@ -115,5 +102,13 @@ public class AlbumDetailActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+
+    protected void showDownloadProgressBar() {
+        mDownloadProgressBar.setVisibility(View.VISIBLE);
+    }
+
+    protected void hideDownloadProgressBar() {
+        mDownloadProgressBar.setVisibility(View.INVISIBLE);
     }
 }

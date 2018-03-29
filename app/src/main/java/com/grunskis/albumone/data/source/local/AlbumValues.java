@@ -43,4 +43,20 @@ public class AlbumValues {
                 photo.getDownloadPath());
         return values;
     }
+
+    public static ContentValues downloadStartedEntry(Album album) {
+        ContentValues values = new ContentValues();
+        values.put(AlbumOnePersistenceContract.DownloadEntry.COLUMN_NAME_ALBUM_REMOTE_ID,
+                album.getRemoteId());
+        values.put(AlbumOnePersistenceContract.DownloadEntry.COLUMN_NAME_STARTED_AT,
+                System.currentTimeMillis());
+        return values;
+    }
+
+    public static ContentValues downloadFinishedEntry() {
+        ContentValues values = new ContentValues();
+        values.put(AlbumOnePersistenceContract.DownloadEntry.COLUMN_NAME_FINISHED_AT,
+                System.currentTimeMillis());
+        return values;
+    }
 }

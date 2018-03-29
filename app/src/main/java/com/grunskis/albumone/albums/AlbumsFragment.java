@@ -1,13 +1,18 @@
 package com.grunskis.albumone.albums;
 
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -23,6 +28,8 @@ import com.grunskis.albumone.R;
 import com.grunskis.albumone.albumdetail.AlbumDetailActivity;
 import com.grunskis.albumone.data.Album;
 import com.grunskis.albumone.data.Photo;
+import com.grunskis.albumone.data.RemoteType;
+import com.grunskis.albumone.data.source.DownloadService;
 import com.grunskis.albumone.util.StethoUtil;
 import com.jakewharton.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
@@ -43,6 +50,8 @@ public class AlbumsFragment extends Fragment implements AlbumsContract.View, Alb
 
     private AlbumsContract.Presenter mPresenter;
     private AlbumsAdapter mAlbumsAdapter;
+    private LocalBroadcastManager mLocalBroadcastManager;
+    private BroadcastReceiver mBroadcastReceiver;
 
     private boolean mShowOnlyLocalAlbums = false;
 
@@ -66,6 +75,30 @@ public class AlbumsFragment extends Fragment implements AlbumsContract.View, Alb
         if (args != null) {
             mShowOnlyLocalAlbums = args.getBoolean(ARGUMENT_LOCAL_ONLY, false);
         }
+
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Album album = Parcels.unwrap(intent.getParcelableExtra(DownloadService.EXTRA_ALBUM));
+                mPresenter.onAlbumDownloaded(album);
+            }
+        };
+
+        Activity activity = getActivity();
+        if (activity != null) {
+            mLocalBroadcastManager = LocalBroadcastManager.getInstance(
+                    activity.getApplicationContext());
+            mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                    new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mLocalBroadcastManager != null) {
+            mLocalBroadcastManager.unregisterReceiver(mBroadcastReceiver);
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -93,10 +126,6 @@ public class AlbumsFragment extends Fragment implements AlbumsContract.View, Alb
                     mPresenter.loadAlbums(page + 1);
                 }
             });
-        }
-
-        if (savedInstanceState != null) {
-            Timber.w("yoooooooo");
         }
 
         mAlbumsAdapter = new AlbumsAdapter(getContext(), this);
@@ -141,6 +170,11 @@ public class AlbumsFragment extends Fragment implements AlbumsContract.View, Alb
         mPresenter.openAlbumDetails(album);
     }
 
+    @Override
+    public void updateAlbum(Album album) {
+        mAlbumsAdapter.updateAlbum(album);
+    }
+
     private static class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder> {
         private Picasso mPicasso;
         private List<Album> mAlbums;
@@ -178,6 +212,17 @@ public class AlbumsFragment extends Fragment implements AlbumsContract.View, Alb
             notifyDataSetChanged();
         }
 
+        void updateAlbum(Album album) {
+            for (int i = 0; i < mAlbums.size(); i++) {
+                Album a = mAlbums.get(i);
+                if (a != null && a.getId() != null && a.getId().equals(album.getId())) {
+                    mAlbums.set(i, album);
+                    notifyItemChanged(i);
+                    break;
+                }
+            }
+        }
+
         @NonNull
         @Override
         public AlbumsAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -206,11 +251,29 @@ public class AlbumsFragment extends Fragment implements AlbumsContract.View, Alb
 
             holder.mTitle.setText(album.getTitle());
 
+            if (album.getDownloadState() == Album.DownloadState.DOWNLOADING) {
+                holder.mDownloadProgress.setVisibility(View.VISIBLE);
+            } else if (album.getDownloadState() == Album.DownloadState.DOWNLOADED) {
+                holder.mDownloadProgress.setVisibility(View.INVISIBLE);
+
+                if (album.getRemoteType() == RemoteType.GOOGLE_PHOTOS) {
+                    holder.mBackendLogo.setImageResource(R.drawable.ic_google_photos_24dp);
+                } else if (album.getRemoteType() == RemoteType.UNSPLASH) {
+                    holder.mBackendLogo.setImageResource(R.drawable.ic_unsplash_24dp);
+                }
+                holder.mBackendLogo.setVisibility(View.VISIBLE);
+            }
+
             holder.mCoverPhoto.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Timber.d("Album clicked %s", album.getTitle());
-                    mAlbumClickListener.onAlbumClick(album);
+                    if (album.getDownloadState() == Album.DownloadState.DOWNLOADING) {
+                        Snackbar.make(view,
+                                view.getResources().getString(R.string.album_downloading),
+                                Snackbar.LENGTH_SHORT).show();
+                    } else {
+                        mAlbumClickListener.onAlbumClick(album);
+                    }
                 }
             });
         }
@@ -227,12 +290,16 @@ public class AlbumsFragment extends Fragment implements AlbumsContract.View, Alb
         static class ViewHolder extends RecyclerView.ViewHolder {
             final ImageView mCoverPhoto;
             final TextView mTitle;
+            final ImageView mBackendLogo;
+            final ProgressBar mDownloadProgress;
 
             ViewHolder(View itemView) {
                 super(itemView);
 
                 mCoverPhoto = itemView.findViewById(R.id.iv_cover_photo);
                 mTitle = itemView.findViewById(R.id.tv_title);
+                mBackendLogo = itemView.findViewById(R.id.iv_backend_type);
+                mDownloadProgress = itemView.findViewById(R.id.pb_album_downoading);
             }
         }
     }

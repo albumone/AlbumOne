@@ -8,4 +8,11 @@
     <string name="gallery_photo">Gallery photo</string>
     <string name="photo">Photo</string>
     <string name="slideshow">Slideshow</string>
+    <string name="action_done">Done</string>
+    <string name="album_downloaded">Album already downloaded…</string>
+    <string name="album_download_started">Album download started…</string>
+    <string name="album_download_finished">Album download finished!</string>
+    <string name="album_downloading">Album still downloading…</string>
+    <string name="backend_logo">Backend logo</string>
+    <string name="album_cover_photo">Album cover photo</string>
 </resources>

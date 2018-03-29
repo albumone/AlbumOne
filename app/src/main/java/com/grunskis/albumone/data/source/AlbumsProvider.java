@@ -16,6 +16,8 @@ public class AlbumsProvider extends ContentProvider {
     private static final int ALBUMS = 100;
     private static final int ALBUM = 101;
     private static final int PHOTOS = 200;
+    private static final int DOWNLOADS = 300;
+    private static final int DOWNLOAD = 301;
 
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private AlbumOneDbHelper mDbHelper;
@@ -28,6 +30,10 @@ public class AlbumsProvider extends ContentProvider {
         matcher.addURI(authority, AlbumOnePersistenceContract.AlbumEntry.TABLE_NAME + "/*", ALBUM);
 
         matcher.addURI(authority, AlbumOnePersistenceContract.PhotoEntry.TABLE_NAME, PHOTOS);
+
+        matcher.addURI(authority, AlbumOnePersistenceContract.DownloadEntry.TABLE_NAME, DOWNLOADS);
+        matcher.addURI(authority, AlbumOnePersistenceContract.DownloadEntry.TABLE_NAME + "/*",
+                DOWNLOAD);
 
         return matcher;
     }
@@ -82,6 +88,18 @@ public class AlbumsProvider extends ContentProvider {
                 );
                 break;
 
+            case DOWNLOAD:
+            case DOWNLOADS:
+                retCursor = mDbHelper.getReadableDatabase().query(
+                        AlbumOnePersistenceContract.DownloadEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+                break;
+
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -100,6 +118,8 @@ public class AlbumsProvider extends ContentProvider {
                 return AlbumOnePersistenceContract.CONTENT_ALBUM_TYPE;
             case PHOTOS:
                 return AlbumOnePersistenceContract.CONTENT_PHOTOS_TYPE;
+            case DOWNLOADS:
+                return AlbumOnePersistenceContract.CONTENT_DOWNLOADS_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -118,7 +138,7 @@ public class AlbumsProvider extends ContentProvider {
                 _id = db.insert(AlbumOnePersistenceContract.AlbumEntry.TABLE_NAME, null,
                         contentValues);
                 if (_id > 0) {
-                    returnUri = AlbumOnePersistenceContract.AlbumEntry.buildAlbumsUriWith(String.valueOf(_id));
+                    returnUri = AlbumOnePersistenceContract.AlbumEntry.buildUriWith(String.valueOf(_id));
                 } else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 }
@@ -129,6 +149,16 @@ public class AlbumsProvider extends ContentProvider {
                         contentValues);
                 if (_id > 0) {
                     returnUri = AlbumOnePersistenceContract.PhotoEntry.buildUriWith(String.valueOf(_id));
+                } else {
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
+                break;
+
+            case DOWNLOADS:
+                _id = db.insert(AlbumOnePersistenceContract.DownloadEntry.TABLE_NAME, null,
+                        contentValues);
+                if (_id > 0) {
+                    returnUri = AlbumOnePersistenceContract.DownloadEntry.buildUriWith(_id);
                 } else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 }
@@ -180,6 +210,12 @@ public class AlbumsProvider extends ContentProvider {
                 rowsUpdated = db.update(AlbumOnePersistenceContract.AlbumEntry.TABLE_NAME, values,
                         selection, selectionArgs);
                 break;
+
+            case DOWNLOAD:
+                rowsUpdated = db.update(AlbumOnePersistenceContract.DownloadEntry.TABLE_NAME, values,
+                        selection, selectionArgs);
+                break;
+
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }

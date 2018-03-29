@@ -14,6 +14,11 @@ public class Album {
     Photo mCoverPhoto;
     String mRemoteId;
     RemoteType mRemoteType;
+    DownloadState mDownloadState;
+
+    public DownloadState getDownloadState() {
+        return mDownloadState;
+    }
 
     public Album() {}
 
@@ -79,5 +84,13 @@ public class Album {
 
     public boolean isLocal() {
         return mCoverPhoto.getDownloadPath() != null;
+    }
+
+    public void setDownloadState(DownloadState downloadState) {
+        mDownloadState = downloadState;
+    }
+
+    public enum DownloadState {
+        NOT_DOWNLOADED, DOWNLOADING, DOWNLOADED
     }
 }

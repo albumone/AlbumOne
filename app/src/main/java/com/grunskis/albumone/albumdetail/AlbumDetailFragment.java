@@ -1,7 +1,10 @@
 package com.grunskis.albumone.albumdetail;
 
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
@@ -9,9 +12,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +53,11 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
     private PhotosAdapter mPhotosAdapter;
     private ProgressBar mLoading;
     private Album mAlbum;
+    private int mMenuItemId = -1;
+    private MenuItem mDownloadMenuItem;
+    private MenuItem mDoneMenuItem;
+    private LocalBroadcastManager mLocalBroadcastManager;
+    private BroadcastReceiver mBroadcastReceiver;
 
     public static AlbumDetailFragment newInstance(Album album) {
         Bundle arguments = new Bundle();
@@ -65,6 +76,22 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         Bundle args = getArguments();
         if (args != null) {
             mAlbum = Parcels.unwrap(args.getParcelable(ARGUMENT_ALBUM));
+        }
+
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Album album = Parcels.unwrap(intent.getParcelableExtra(DownloadService.EXTRA_ALBUM));
+                mPresenter.onAlbumDownloaded(album);
+            }
+        };
+
+        Activity activity = getActivity();
+        if (activity != null) {
+            mLocalBroadcastManager = LocalBroadcastManager.getInstance(
+                    activity.getApplicationContext());
+            mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                    new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
         }
     }
 
@@ -97,6 +124,14 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
     }
 
     @Override
+    public void onDestroy() {
+        if (mLocalBroadcastManager != null) {
+            mLocalBroadcastManager.unregisterReceiver(mBroadcastReceiver);
+        }
+        super.onDestroy();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         mPresenter.start();
@@ -104,28 +139,13 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Intent intent;
-
         switch (item.getItemId()) {
             case R.id.action_download:
-                //mPresenter.downloadAlbum();
-                //finish();
+                mPresenter.downloadAlbum();
+                return true;
 
-                intent = new Intent(getContext(), DownloadService.class);
-                intent.putExtra(DownloadService.EXTRA_ALBUM, Parcels.wrap(mAlbum));
-                Context context = getContext();
-                if (context != null) {
-                    context.startService(intent);
-
-                    // TODO: 3/23/2018 replace with a spinner
-                    item.setEnabled(false);
-                    item.getIcon().setAlpha(130);
-
-                    showAlbumAlbumDownloadStarted();
-                } else {
-                    Timber.e("Context is null!");
-                }
-
+            case R.id.action_done:
+                mPresenter.showAlbumDownloaded();
                 return true;
 
             case R.id.action_slideshow:
@@ -135,6 +155,22 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        if (mMenuItemId > -1) {
+            menu.findItem(mMenuItemId).setVisible(true);
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_album_detail, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+
+        mDownloadMenuItem = menu.findItem(R.id.action_download);
+        mDoneMenuItem = menu.findItem(R.id.action_done);
     }
 
     @Override
@@ -151,12 +187,56 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         }
     }
 
+    @Override
+    public void setDownloadIndicator(boolean downloading) {
+        AlbumDetailActivity activity = ((AlbumDetailActivity) getActivity());
+        if (activity == null) return;
+
+        if (downloading) {
+            activity.showDownloadProgressBar();
+        } else {
+            activity.hideDownloadProgressBar();
+        }
+    }
+
     public void showAlbumPhotos(List<Photo> photos) {
         mPhotosAdapter.addPhotos(photos);
     }
 
-    public void showAlbumAlbumDownloadStarted() {
-        Snackbar.make(this.getView(), "Album download started...", Snackbar.LENGTH_LONG).show();
+    public void showAlbumDownloadStarted() {
+        if (mDownloadMenuItem != null) {
+            mDownloadMenuItem.setVisible(false);
+        }
+
+        Activity activity = getActivity();
+        if (activity != null) {
+            Snackbar.make(getActivity().findViewById(android.R.id.content),
+                    getResources().getString(R.string.album_download_started),
+                    Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void showAlbumDownloadFinished() {
+        if (mDoneMenuItem != null) {
+            mDoneMenuItem.setVisible(true);
+        }
+
+        Activity activity = getActivity();
+        if (activity != null) {
+            Snackbar.make(activity.findViewById(android.R.id.content),
+                    getResources().getString(R.string.album_download_finished),
+                    Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    public void showAlbumDownloaded() {
+        Activity activity = getActivity();
+        if (activity != null) {
+            Snackbar.make(getActivity().findViewById(android.R.id.content),
+                    getResources().getString(R.string.album_downloaded),
+                    Snackbar.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -178,6 +258,33 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         intent.putExtra(GalleryActivity.EXTRA_PHOTOS, Parcels.wrap(photos));
         intent.putExtra(GalleryActivity.EXTRA_IS_SLIDESHOw, true);
         startActivity(intent);
+    }
+
+    @Override
+    public void startAlbumDownload() {
+        Context context = getContext();
+        Intent intent = new Intent(context, DownloadService.class);
+        intent.putExtra(DownloadService.EXTRA_ALBUM, Parcels.wrap(mAlbum));
+        if (context != null) {
+            context.startService(intent);
+        } else {
+            Timber.e("Context is null!");
+        }
+    }
+
+    @Override
+    public void showDoneIcon() {
+        mMenuItemId = R.id.action_done;
+    }
+
+    @Override
+    public void showDownloadIcon() {
+        mMenuItemId = R.id.action_download;
+    }
+
+    @Override
+    public void showSlideshowIcon() {
+        mMenuItemId = R.id.action_slideshow;
     }
 
     private static class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.ViewHolder> {
@@ -222,7 +329,7 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         }
 
         @Override
-        public void onBindViewHolder(@NonNull final PhotosAdapter.ViewHolder holder, final int position) {
+        public void onBindViewHolder(@NonNull final PhotosAdapter.ViewHolder holder, int position) {
             final Photo photo = mPhotos.get(position);
 
             // calculate the resulting height of the image manually and set it to the item view
@@ -243,7 +350,7 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
             holder.mPhoto.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    mClickListener.onClick(mPhotos, position);
+                    mClickListener.onClick(mPhotos, holder.getAdapterPosition());
                 }
             });
         }

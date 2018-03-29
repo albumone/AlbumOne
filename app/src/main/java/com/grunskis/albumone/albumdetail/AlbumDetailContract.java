@@ -11,21 +11,40 @@ public interface AlbumDetailContract {
     interface View extends BaseView<AlbumDetailContract.Presenter> {
         void setLoadingIndicator(boolean active);
 
+        void setDownloadIndicator(boolean downloading);
+
         void showAlbumPhotos(List<Photo> photos);
 
-        //void showAlbumSaved();
-        void showAlbumAlbumDownloadStarted();
+        void showAlbumDownloadStarted();
+
+        void showAlbumDownloadFinished();
+
+        void showAlbumDownloaded();
 
         void showPhotoGallery(Album album, List<Photo> photos, int position);
 
         void openSlideshow(List<Photo> photos);
+
+        void startAlbumDownload();
+
+        void showDoneIcon();
+
+        void showDownloadIcon();
+
+        void showSlideshowIcon();
     }
+
     interface Presenter extends BasePresenter {
         void loadAlbumPhotos(int page);
 
-        //void downloadAlbum();
+        void downloadAlbum();
+
+        void onAlbumDownloaded(Album album);
+
         void openPhotoGallery(Album album, List<Photo> photos, int position);
 
         void startSlideshow(List<Photo> photos);
+
+        void showAlbumDownloaded();
     }
 }

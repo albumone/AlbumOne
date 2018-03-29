@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.grunskis.albumone.data.Album;
 import com.grunskis.albumone.data.Photo;
@@ -35,6 +36,7 @@ import timber.log.Timber;
 
 public class DownloadService extends IntentService {
     public static final String EXTRA_ALBUM = "com.grunskis.albumone.data.source.EXTRA_ALBUM";
+    public static final String BROADCAST_DOWNLOAD_FINISHED = "BROADCAST_DOWNLOAD_FINISHED";
 
     private ContentResolver mContentResolver;
     private AlbumsRepository mRepository;
@@ -52,6 +54,7 @@ public class DownloadService extends IntentService {
             Timber.e("Failed to download photo! id: %s url: %s", photo.getRemoteId(), photo.getSmallUri());
         }
     };
+    private long mDownloadId;
 
     public DownloadService() {
         super("DownloadService");
@@ -90,7 +93,22 @@ public class DownloadService extends IntentService {
         }
         mRepository = new AlbumsRepository(remoteDataSource, null);
 
+        // save album to the DB so that it gets an ID assigned
+        // we don't set the cover image here yet, it will be set later after it's downloaded
+        long albumId = saveAlbum(album);
+        album.setId(albumId);
+
+        mDownloadId = createDownloadEntry(album);
+
         downloadAlbumPhotos(album);
+    }
+
+    private long createDownloadEntry(Album album) {
+        Uri uri = mContentResolver.insert(
+                AlbumOnePersistenceContract.DownloadEntry.CONTENT_URI,
+                AlbumValues.downloadStartedEntry(album));
+
+        return ContentUris.parseId(uri);
     }
 
     private boolean isExternalStorageWritable() {
@@ -109,10 +127,6 @@ public class DownloadService extends IntentService {
 
     private void downloadAlbumPhotos(final Album album) {
         final File albumDir = getPrivateAlbumStorageDir(this, album.getRemoteId());
-
-        // save album to the DB so that it gets an ID assigned
-        // we don't set the cover image here yet, it will be set later after it's downloaded
-        album.setId(saveAlbum(album));
 
         // download album cover photo
         Photo coverPhoto = album.getCoverPhoto();
@@ -152,6 +166,8 @@ public class DownloadService extends IntentService {
         mRepository.getAlbumPhotos(album, page, new Callbacks.GetAlbumPhotosCallback() {
             @Override
             public void onAlbumPhotosLoaded(List<Photo> photos) {
+                Timber.i("Downloading album photos: title: %s page %d",
+                        album.getTitle(), page);
                 callback.downloadPhotos(photos);
 
                 downloadAlbumPhotos(album, page + 1, callback);
@@ -159,6 +175,12 @@ public class DownloadService extends IntentService {
 
             @Override
             public void onDataNotAvailable() {
+                Timber.i("Downloading album photos finished! title: %s", album.getTitle());
+
+                updateDownloadEntry(mDownloadId);
+
+                album.setDownloadState(Album.DownloadState.DOWNLOADED);
+                broadcastDownloadFinished(album);
             }
         });
     }
@@ -214,11 +236,26 @@ public class DownloadService extends IntentService {
 
     private void updateAlbumCoverPhoto(Album album, Photo photo) {
         mContentResolver.update(
-                AlbumOnePersistenceContract.AlbumEntry.buildAlbumsUriWith(album.getId()),
+                AlbumOnePersistenceContract.AlbumEntry.buildUriWith(album.getId()),
                 AlbumValues.albumCoverPhoto(photo),
                 AlbumOnePersistenceContract.AlbumEntry._ID + " = ?",
                 new String[]{album.getId()}
         );
+    }
+
+    private void updateDownloadEntry(long downloadId) {
+        mContentResolver.update(
+                AlbumOnePersistenceContract.DownloadEntry.buildUriWith(downloadId),
+                AlbumValues.downloadFinishedEntry(),
+                AlbumOnePersistenceContract.DownloadEntry._ID + " = ?",
+                new String[]{String.valueOf(downloadId)}
+        );
+    }
+
+    private void broadcastDownloadFinished(Album album) {
+        Intent intent = new Intent(BROADCAST_DOWNLOAD_FINISHED);
+        intent.putExtra(EXTRA_ALBUM, Parcels.wrap(album));
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     interface DownloadPhotosListener {

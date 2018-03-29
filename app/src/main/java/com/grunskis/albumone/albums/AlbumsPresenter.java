@@ -1,6 +1,7 @@
 package com.grunskis.albumone.albums;
 
 import com.grunskis.albumone.data.Album;
+import com.grunskis.albumone.data.Download;
 import com.grunskis.albumone.data.source.AlbumsRepository;
 import com.grunskis.albumone.data.source.Callbacks;
 
@@ -25,7 +26,7 @@ public class AlbumsPresenter implements AlbumsContract.Presenter,
         loadAlbums(1);
     }
 
-    public void resetAlbums() {
+    private void resetAlbums() {
         mAlbumsView.resetAlbums();
     }
 
@@ -43,6 +44,20 @@ public class AlbumsPresenter implements AlbumsContract.Presenter,
     @Override
     public void onAlbumsLoaded(List<Album> albums) {
         mAlbumsView.setLoadingIndicator(false);
+
+        for (Album album : albums) {
+            Download download = mAlbumsRepository.getDownload(album.getRemoteId());
+            if (download == null) {
+                album.setDownloadState(Album.DownloadState.NOT_DOWNLOADED);
+            } else {
+                if (download.getFinishedAt() == null) {
+                    album.setDownloadState(Album.DownloadState.DOWNLOADING);
+                } else {
+                    album.setDownloadState(Album.DownloadState.DOWNLOADED);
+                }
+            }
+        }
+
         mAlbumsView.showAlbums(albums);
     }
 
@@ -50,5 +65,10 @@ public class AlbumsPresenter implements AlbumsContract.Presenter,
     public void onDataNotAvailable() {
         mAlbumsView.setLoadingIndicator(false);
         // TODO: 1/29/2018 show some error
+    }
+
+    @Override
+    public void onAlbumDownloaded(Album album) {
+        mAlbumsView.updateAlbum(album);
     }
 }

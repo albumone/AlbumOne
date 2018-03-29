@@ -12,6 +12,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 
 import com.grunskis.albumone.data.Album;
+import com.grunskis.albumone.data.Download;
 import com.grunskis.albumone.data.Photo;
 import com.grunskis.albumone.data.source.Callbacks;
 import com.grunskis.albumone.data.source.LoaderProvider;
@@ -108,6 +109,22 @@ public class LocalDataSource {
         String[] selectionArgs = new String[]{albumId};
         mContentResolver.delete(AlbumOnePersistenceContract.PhotoEntry.CONTENT_URI,
                 where, selectionArgs);
+    }
+
+    public Download getDownload(String albumRemoteId) {
+        String where = AlbumOnePersistenceContract.DownloadEntry.COLUMN_NAME_ALBUM_REMOTE_ID + " = ?";
+        String[] selectionArgs = new String[]{albumRemoteId};
+        Cursor cursor = mContentResolver.query(
+                AlbumOnePersistenceContract.DownloadEntry.CONTENT_URI,
+                AlbumOnePersistenceContract.DownloadEntry.COLUMNS,
+                where, selectionArgs, null);
+
+        Download download = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            download = Download.from(cursor);
+            cursor.close();
+        }
+        return download;
     }
 
     public void getAlbumPhotos(final Album album, final Callbacks.GetAlbumPhotosCallback callback) {

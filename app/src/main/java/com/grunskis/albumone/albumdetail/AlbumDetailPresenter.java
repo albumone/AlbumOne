@@ -14,8 +14,6 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter,
     private final AlbumsRepository mRepository;
     private final AlbumDetailContract.View mView;
 
-    //private List<Photo> mPhotos;
-
     AlbumDetailPresenter(Album album, AlbumsRepository repository,
                          AlbumDetailContract.View view) {
         mAlbum = album;
@@ -28,6 +26,24 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter,
     @Override
     public void start() {
         loadAlbumPhotos(1);
+
+        switch (mAlbum.getDownloadState()) {
+            case NOT_DOWNLOADED:
+                mView.showDownloadIcon();
+                break;
+
+            case DOWNLOADING:
+                mView.setDownloadIndicator(true);
+                break;
+
+            case DOWNLOADED:
+                if (mAlbum.isLocal()) {
+                    mView.showSlideshowIcon();
+                } else {
+                    mView.showDoneIcon();
+                }
+                break;
+        }
     }
 
     public void loadAlbumPhotos(int page) {
@@ -38,7 +54,6 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter,
     @Override
     public void onAlbumPhotosLoaded(List<Photo> photos) {
         mView.setLoadingIndicator(false);
-        //mPhotos = new ArrayList<>(photos);
         mView.showAlbumPhotos(photos);
     }
 
@@ -48,10 +63,23 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter,
         // TODO: 3/19/2018 show nice error?
     }
 
-//    public void downloadAlbum() {
-//        // TODO: 3/13/2018 implement saving in a service or something
-//        mRepository.downloadAlbumPhotos(mAlbum);
-//        mView.showAlbumSaved();
+    @Override
+    public void downloadAlbum() {
+        mView.setDownloadIndicator(true);
+        mView.startAlbumDownload();
+        mView.showAlbumDownloadStarted();
+    }
+
+    @Override
+    public void onAlbumDownloaded(Album album) {
+        mView.setDownloadIndicator(false);
+        mView.showAlbumDownloadFinished();
+    }
+
+//    @Override
+//    public void onAlbumDownloadFailed() {
+//        mView.setDownloadIndicator(false);
+//        mView.showAlbumDownloadFailed();
 //    }
 
     @Override
@@ -62,5 +90,10 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter,
     @Override
     public void startSlideshow(List<Photo> photos) {
         mView.openSlideshow(photos);
+    }
+
+    @Override
+    public void showAlbumDownloaded() {
+        mView.showAlbumDownloaded();
     }
 }

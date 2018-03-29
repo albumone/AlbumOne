@@ -7,8 +7,9 @@ import com.grunskis.albumone.BuildConfig;
 
 public class AlbumOnePersistenceContract {
     public static final String CONTENT_AUTHORITY = BuildConfig.APPLICATION_ID;
-    public static final String CONTENT_SCHEME = "content://";
-    public static final Uri BASE_CONTENT_URI = Uri.parse(CONTENT_SCHEME + CONTENT_AUTHORITY);
+    public static final String CONTENT_DOWNLOADS_TYPE = "vnd.android.cursor.dir/" +
+            CONTENT_AUTHORITY + "/" + DownloadEntry.TABLE_NAME;
+    private static final String CONTENT_SCHEME = "content://";
 
     public static final String CONTENT_ALBUMS_TYPE = "vnd.android.cursor.dir/" +
             CONTENT_AUTHORITY + "/" + AlbumEntry.TABLE_NAME;
@@ -17,6 +18,7 @@ public class AlbumOnePersistenceContract {
 
     public static final String CONTENT_PHOTOS_TYPE = "vnd.android.cursor.dir/" +
             CONTENT_AUTHORITY + "/" + PhotoEntry.TABLE_NAME;
+    private static final Uri BASE_CONTENT_URI = Uri.parse(CONTENT_SCHEME + CONTENT_AUTHORITY);
 
     // private constructor to prevent instantiation
     private AlbumOnePersistenceContract() {}
@@ -49,7 +51,7 @@ public class AlbumOnePersistenceContract {
                 AlbumEntry.COLUMN_NAME_REMOTE_TYPE,
         };
 
-        public static Uri buildAlbumsUriWith(String id) {
+        public static Uri buildUriWith(String id) {
             return CONTENT_URI.buildUpon().appendPath(id).build();
         }
     }
@@ -79,6 +81,32 @@ public class AlbumOnePersistenceContract {
 
         public static Uri buildUriWith(String id) {
             return CONTENT_URI.buildUpon().appendPath(id).build();
+        }
+    }
+
+    public static abstract class DownloadEntry implements BaseColumns {
+        public static final String TABLE_NAME = "downloads";
+
+        public static final Uri CONTENT_URI = BASE_CONTENT_URI
+                .buildUpon()
+                .appendPath(TABLE_NAME)
+                .build();
+
+        public static final String COLUMN_NAME_ALBUM_REMOTE_ID = "album_remote_id";
+        public static final String COLUMN_NAME_STARTED_AT = "started_at";
+        public static final String COLUMN_NAME_FINISHED_AT = "finished_at";
+        public static final String COLUMN_NAME_FAILED_AT = "failed_at";
+
+        public static String[] COLUMNS = new String[]{
+                DownloadEntry._ID,
+                DownloadEntry.COLUMN_NAME_ALBUM_REMOTE_ID,
+                DownloadEntry.COLUMN_NAME_STARTED_AT,
+                DownloadEntry.COLUMN_NAME_FINISHED_AT,
+                DownloadEntry.COLUMN_NAME_FAILED_AT,
+        };
+
+        public static Uri buildUriWith(long id) {
+            return CONTENT_URI.buildUpon().appendPath(String.valueOf(id)).build();
         }
     }
 }
