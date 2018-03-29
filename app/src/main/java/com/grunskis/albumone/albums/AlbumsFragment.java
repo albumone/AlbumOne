@@ -255,7 +255,8 @@ public class AlbumsFragment extends Fragment implements AlbumsContract.View, Alb
                 holder.mDownloadProgress.setVisibility(View.VISIBLE);
             } else if (album.getDownloadState() == Album.DownloadState.DOWNLOADED) {
                 holder.mDownloadProgress.setVisibility(View.INVISIBLE);
-
+            }
+            if (album.isLocal()) {
                 if (album.getRemoteType() == RemoteType.GOOGLE_PHOTOS) {
                     holder.mBackendLogo.setImageResource(R.drawable.ic_google_photos_24dp);
                 } else if (album.getRemoteType() == RemoteType.UNSPLASH) {
