@@ -203,6 +203,11 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
         mPhotosAdapter.addPhotos(photos);
     }
 
+    @Override
+    public void resetAlbumPhotos() {
+        mPhotosAdapter.resetAlbumPhotos();
+    }
+
     public void showAlbumDownloadStarted() {
         if (mDownloadMenuItem != null) {
             mDownloadMenuItem.setVisible(false);
@@ -255,8 +260,9 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
     @Override
     public void openSlideshow(List<Photo> photos) {
         Intent intent = new Intent(getContext(), GalleryActivity.class);
+        intent.putExtra(GalleryActivity.EXTRA_ALBUM, Parcels.wrap(mAlbum));
         intent.putExtra(GalleryActivity.EXTRA_PHOTOS, Parcels.wrap(photos));
-        intent.putExtra(GalleryActivity.EXTRA_IS_SLIDESHOw, true);
+        intent.putExtra(GalleryActivity.EXTRA_IS_SLIDESHOW, true);
         startActivity(intent);
     }
 
@@ -314,6 +320,13 @@ public class AlbumDetailFragment extends Fragment implements AlbumDetailContract
                 mPhotos.addAll(photos);
             }
             notifyDataSetChanged();
+        }
+
+        void resetAlbumPhotos() {
+            if (mPhotos != null) {
+                mPhotos.clear();
+                notifyDataSetChanged();
+            }
         }
 
         public List<Photo> getPhotos() {

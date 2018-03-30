@@ -48,6 +48,11 @@ class GalleryAdapter extends PagerAdapter {
         mPhotos = new ArrayList<>(photos);
     }
 
+    public void addPhotos(List<Photo> photos) {
+        mPhotos.addAll(photos);
+        notifyDataSetChanged();
+    }
+
     @Override
     public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
         container.removeView((View) object);
@@ -57,7 +62,8 @@ class GalleryAdapter extends PagerAdapter {
     @Override
     public Object instantiateItem(@NonNull ViewGroup container, int position) {
         LayoutInflater inflater = LayoutInflater.from(mContext);
-        ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.item_gallery_photo, container, false);
+        ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.item_gallery_photo,
+                container, false);
         ImageView imageView = layout.findViewById(R.id.photo);
 
         Photo photo = mPhotos.get(position);
@@ -83,6 +89,10 @@ class GalleryAdapter extends PagerAdapter {
 
     @Override
     public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
-        return view == object; // TODO: 3/19/2018 is this ok?
+        return view == object;
+    }
+
+    public List<Photo> getPhotos() {
+        return mPhotos;
     }
 }

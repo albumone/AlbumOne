@@ -25,6 +25,9 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter,
 
     @Override
     public void start() {
+        // TODO: 3/29/2018 reseting on back is not the best. should restore from cache instead.
+        resetAlbumPhotos();
+
         loadAlbumPhotos(1);
 
         switch (mAlbum.getDownloadState()) {
@@ -97,5 +100,9 @@ public class AlbumDetailPresenter implements AlbumDetailContract.Presenter,
     @Override
     public void showAlbumDownloaded() {
         mView.showAlbumDownloaded();
+    }
+
+    private void resetAlbumPhotos() {
+        mView.resetAlbumPhotos();
     }
 }

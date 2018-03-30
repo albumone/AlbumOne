@@ -85,6 +85,9 @@ public class UnsplashDataSource implements RemoteDataSource {
                             List<Album> albums = new ArrayList<>();
 
                             for (Collection collection : collections) {
+                                Timber.i("Collection title: %s totalPhotos: %d",
+                                        collection.title, collection.totalPhotos);
+
                                 int height = calcPhotoHeight(collection.coverPhoto.width,
                                         collection.coverPhoto.height);
                                 Photo coverPhoto = new Photo(null,
@@ -184,10 +187,14 @@ public class UnsplashDataSource implements RemoteDataSource {
         @SerializedName("cover_photo")
         public final UnsplashPhoto coverPhoto;
 
-        public Collection(String id, String title, UnsplashPhoto coverPhoto) {
+        @SerializedName("total_photos")
+        public final int totalPhotos;
+
+        public Collection(String id, String title, UnsplashPhoto coverPhoto, int totalPhotos) {
             this.id = id;
             this.title = title;
             this.coverPhoto = coverPhoto;
+            this.totalPhotos = totalPhotos;
         }
     }
 

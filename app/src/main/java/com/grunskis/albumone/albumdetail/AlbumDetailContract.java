@@ -32,6 +32,8 @@ public interface AlbumDetailContract {
         void showDownloadIcon();
 
         void showSlideshowIcon();
+
+        void resetAlbumPhotos();
     }
 
     interface Presenter extends BasePresenter {
