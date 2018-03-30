@@ -8,8 +8,8 @@ import android.support.v4.view.PagerAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
+import com.github.chrisbanes.photoview.PhotoView;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.data.Photo;
 import com.grunskis.albumone.util.StethoUtil;
@@ -64,16 +64,16 @@ class GalleryAdapter extends PagerAdapter {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.item_gallery_photo,
                 container, false);
-        ImageView imageView = layout.findViewById(R.id.photo);
+        PhotoView photoView = layout.findViewById(R.id.photo);
 
         Photo photo = mPhotos.get(position);
         if (photo.getDownloadPath() != null) {
             File file = new File(photo.getDownloadPath());
-            imageView.setImageURI(Uri.fromFile(file));
+            photoView.setImageURI(Uri.fromFile(file));
         } else {
             mPicasso.load(photo.getSmallUri())
                     .resize(mDisplayWidth, 0)
-                    .into(imageView);
+                    .into(photoView);
         }
 
         layout.setOnClickListener(mClickListener);
