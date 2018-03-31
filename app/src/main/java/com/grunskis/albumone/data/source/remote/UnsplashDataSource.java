@@ -14,8 +14,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -30,6 +32,8 @@ import static java.lang.Math.round;
 
 public class UnsplashDataSource implements RemoteDataSource {
     private static final int REGULAR_PHOTO_WIDTH = 1080;
+    private static final String API_BASE_URL = "https://api.unsplash.com/";
+    private static final String API_VERSION = "v1";
 
     private static UnsplashDataSource INSTANCE = null;
 
@@ -51,15 +55,21 @@ public class UnsplashDataSource implements RemoteDataSource {
     }
 
     private UnsplashApi getApiClient() {
-        // TODO: 2/6/2018 figure out where to move this initialization code
         OkHttpClient.Builder builder = StethoUtil.addNetworkInterceptor(new OkHttpClient.Builder());
         builder.interceptors().add(new UnsplashAuthInterceptor());
-        OkHttpClient client = builder.build();
+        builder.interceptors().add(new Interceptor() {
+            @Override
+            public okhttp3.Response intercept(@NonNull Chain chain) throws IOException {
+                Request.Builder requestBuilder = chain.request().newBuilder();
+                requestBuilder.addHeader("Accept-Version", API_VERSION);
+                return chain.proceed(requestBuilder.build());
+            }
+        });
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.unsplash.com/") // TODO: 2/7/2018 move to config or db
+                .baseUrl(API_BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(client)
+                .client(builder.build())
                 .build();
 
         return retrofit.create(UnsplashApi.class);
@@ -102,7 +112,13 @@ public class UnsplashDataSource implements RemoteDataSource {
                         }
                     } else {
                         try {
-                            Timber.e("Failed to load collections: %s", response.errorBody().string());
+                            ResponseBody error = response.errorBody();
+                            if (error != null) {
+                                Timber.e("Failed to load collections! error: %s",
+                                        error.string());
+                            } else {
+                                Timber.e("Failed to load collections! error: null");
+                            }
                         } catch (IOException e) {
                             Timber.e(e);
                         }
@@ -119,7 +135,8 @@ public class UnsplashDataSource implements RemoteDataSource {
     }
 
     @Override
-    public void getAlbumPhotos(final Album album, int page, final Callbacks.GetAlbumPhotosCallback callback) {
+    public void getAlbumPhotos(final Album album, int page,
+                               final Callbacks.GetAlbumPhotosCallback callback) {
         UnsplashApi api = getApiClient();
 
         api.getCollectionPhotos(album.getRemoteId(), page).enqueue(new Callback<List<UnsplashPhoto>>() {
@@ -144,7 +161,13 @@ public class UnsplashDataSource implements RemoteDataSource {
                     }
                 } else {
                     try {
-                        Timber.e("Failed to load collection photos: %s", response.errorBody().string());
+                        ResponseBody error = response.errorBody();
+                        if (error != null) {
+                            Timber.e("Failed to load collection photos! error: %s",
+                                    error.string());
+                        } else {
+                            Timber.e("Failed to load collection photos! error: null");
+                        }
                     } catch (IOException e) {
                         Timber.e(e);
                     }
@@ -172,11 +195,9 @@ public class UnsplashDataSource implements RemoteDataSource {
 
     static class Urls {
         public final String regular;
-        public final String small;
 
-        public Urls(String regular, String small) {
+        public Urls(String regular) {
             this.regular = regular;
-            this.small = small;
         }
     }
 
