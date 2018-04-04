@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.gms.common.AccountPicker;
-import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
 
 import timber.log.Timber;
 
@@ -19,32 +18,19 @@ public class PicasawebAlbumsActivity extends RemoteAlbumsActivity {
     private final int PICK_ACCOUNT_REQUEST = 1;
     private final int REQUEST_AUTHENTICATE = 2;
 
-    AccountManager mAccountManager;
-    Account mSelectedAccount;
-
-    //SharedPreferences mSharedPreferences;
+    private AccountManager mAccountManager;
+    private Account mSelectedAccount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setTitle(BACKEND_NAME);
-
-        //Context context = PicasawebAlbumsActivity.this;
         String authToken = getAuthToken(this);
-//        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-//        String authToken = mSharedPreferences.getString(BACKEND_AUTH_TOKEN, null);
         if (authToken == null) {
             authenticate();
         } else {
-            initPresenter(authToken);
+            setResultAndFinish(authToken);
         }
-    }
-
-    private void initPresenter(String authToken) {
-        PicasaWebDataSource dataSource = PicasaWebDataSource.getInstance();
-        dataSource.setAuthToken(authToken);
-        createPresenter(dataSource);
     }
 
     @Override
@@ -105,24 +91,22 @@ public class PicasawebAlbumsActivity extends RemoteAlbumsActivity {
 
                 if (b.containsKey(AccountManager.KEY_INTENT)) {
                     Intent intent = b.getParcelable(AccountManager.KEY_INTENT);
-                    int flags = intent.getFlags();
-                    intent.setFlags(flags);
-                    flags &= ~Intent.FLAG_ACTIVITY_NEW_TASK; // TODO: 3/16/2018 wtf?
-                    startActivityForResult(intent, REQUEST_AUTHENTICATE);
+                    if (intent != null) {
+                        int flags = intent.getFlags();
+                        flags &= ~Intent.FLAG_ACTIVITY_NEW_TASK;
+                        intent.setFlags(flags);
+                        startActivityForResult(intent, REQUEST_AUTHENTICATE);
+                    }
                     return;
                 }
 
                 if (b.containsKey(AccountManager.KEY_AUTHTOKEN)) {
                     String authToken = b.getString(AccountManager.KEY_AUTHTOKEN);
-                    //mSharedPreferences.edit().putString(BACKEND_AUTH_TOKEN, authToken).apply();
                     setAuthToken(PicasawebAlbumsActivity.this, authToken);
-
-//                    // TODO: 3/19/2018 make this dry
-//                    PicasaWebDataSource dataSource = PicasaWebDataSource.getInstance();
-//                    dataSource.setAuthToken(authToken);
-//                    createPresenter(dataSource);
-                    initPresenter(authToken);
+                    setResultAndFinish(authToken);
                 }
+
+                // TODO: 4/4/2018 handle error
             } catch (Exception e) {
                 e.printStackTrace();
             }

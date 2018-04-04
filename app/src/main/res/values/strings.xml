@@ -15,4 +15,6 @@
     <string name="album_downloading">Album still downloading…</string>
     <string name="backend_logo">Backend logo</string>
     <string name="album_cover_photo">Album cover photo</string>
+    <string name="backend_google_photos">Google Photos</string>
+    <string name="backend_unsplash">Unsplash</string>
 </resources>

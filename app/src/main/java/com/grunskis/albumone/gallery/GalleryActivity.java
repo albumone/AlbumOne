@@ -13,6 +13,7 @@ import com.grunskis.albumone.R;
 import com.grunskis.albumone.data.Album;
 import com.grunskis.albumone.data.Photo;
 import com.grunskis.albumone.data.source.AlbumsRepository;
+import com.grunskis.albumone.data.source.Callbacks;
 import com.grunskis.albumone.data.source.RemoteDataSource;
 import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
 import com.grunskis.albumone.data.source.remote.UnsplashDataSource;
@@ -23,8 +24,7 @@ import java.util.List;
 
 public class GalleryActivity
         extends AppCompatActivity
-        implements View.OnClickListener, GalleryContract.View {
-
+        implements View.OnClickListener, Callbacks.GetAlbumPhotosCallback {
     public static final String EXTRA_ALBUM = "com.grunskis.albumone.gallery.EXTRA_ALBUM";
     public static final String EXTRA_POSITION = "com.grunskis.albumone.gallery.EXTRA_POSITION";
     public static final String EXTRA_PHOTOS = "com.grunskis.albumone.gallery.EXTRA_PHOTOS";
@@ -33,9 +33,9 @@ public class GalleryActivity
     // TODO: 3/29/2018 read this value from settings
     private static final int SLIDESHOW_DELAY_MILLIS = 5000;
 
-    private GalleryContract.Presenter mPresenter;
-
+    private Album mAlbum;
     private GalleryAdapter mAdapter;
+    private AlbumsRepository mRepository;
 
     private Handler mSlideshowHandler;
     private Runnable mSlideshowRunnable;
@@ -52,7 +52,7 @@ public class GalleryActivity
         boolean isSlideshow = intent.getBooleanExtra(EXTRA_IS_SLIDESHOW, false);
         int position = intent.getIntExtra(EXTRA_POSITION, 0);
         final List<Photo> photos = Parcels.unwrap(intent.getParcelableExtra(EXTRA_PHOTOS));
-        Album album = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ALBUM));
+        mAlbum = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ALBUM));
 
         mAdapter = new GalleryAdapter(this, this);
         mAdapter.setPhotos(photos);
@@ -64,7 +64,7 @@ public class GalleryActivity
         viewPager.addOnPageChangeListener(new ViewPagerLoadMoreListener(mAdapter) {
             @Override
             public void onLoadMore(int page) {
-                mPresenter.loadAlbumPhotos(page);
+                loadAlbumPhotos(page);
             }
         });
 
@@ -74,8 +74,8 @@ public class GalleryActivity
         }
 
         RemoteDataSource remoteDataSource = null;
-        if (!album.isLocal()) {
-            switch (album.getRemoteType()) {
+        if (!mAlbum.isLocal()) {
+            switch (mAlbum.getRemoteType()) {
                 case GOOGLE_PHOTOS:
                     remoteDataSource = PicasaWebDataSource.getInstance();
                     break;
@@ -86,9 +86,7 @@ public class GalleryActivity
             }
         }
 
-        AlbumsRepository repository = new AlbumsRepository(remoteDataSource, null);
-
-        new GalleryPresenter(album, repository, this);
+        mRepository = new AlbumsRepository(remoteDataSource, null);
 
         if (isSlideshow) {
             mSlideshowRunnable = new Runnable() {
@@ -130,16 +128,24 @@ public class GalleryActivity
 
     @Override
     public void onClick(View view) {
-        toggleLowProfileMode();
+        toggleLowProfileMode(); // TODO: 4/4/2018 figure out why this doesn't work anymore
     }
 
-    @Override
-    public void setPresenter(GalleryContract.Presenter presenter) {
-        mPresenter = presenter;
-    }
-
-    @Override
     public void showAlbumPhotos(List<Photo> photos) {
         mAdapter.addPhotos(photos);
+    }
+
+    public void loadAlbumPhotos(int page) {
+        mRepository.getAlbumPhotos(mAlbum, page, this);
+    }
+
+    @Override
+    public void onAlbumPhotosLoaded(List<Photo> photos) {
+        showAlbumPhotos(photos);
+    }
+
+    @Override
+    public void onDataNotAvailable() {
+        // TODO: 4/4/2018 implement
     }
 }
