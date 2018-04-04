@@ -137,7 +137,8 @@ public class AlbumDetailActivity
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Album album = Parcels.unwrap(intent.getParcelableExtra(DownloadService.EXTRA_ALBUM));
+                Album album = Parcels.unwrap(
+                        intent.getParcelableExtra(DownloadService.EXTRA_ALBUM));
                 onAlbumDownloaded(album);
             }
         };
@@ -242,8 +243,10 @@ public class AlbumDetailActivity
     }
 
     public void onAlbumDownloaded(Album album) {
-        setDownloadIndicator(false);
-        showAlbumDownloadFinished();
+        if (mAlbum.getRemoteId().equals(album.getRemoteId())) {
+            setDownloadIndicator(false);
+            showAlbumDownloadFinished();
+        }
     }
 
     public void loadAlbumPhotos(int page) {

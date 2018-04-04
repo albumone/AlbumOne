@@ -146,8 +146,8 @@ public class AlbumsActivity
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                // TODO: 4/4/2018 check if this is the corrent message
-                Album album = Parcels.unwrap(intent.getParcelableExtra(DownloadService.EXTRA_ALBUM));
+                Album album = Parcels.unwrap(
+                        intent.getParcelableExtra(DownloadService.EXTRA_ALBUM));
                 updateAlbum(album);
             }
         };
