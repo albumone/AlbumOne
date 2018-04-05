@@ -120,8 +120,10 @@ public class LocalDataSource {
                 where, selectionArgs, null);
 
         Download download = null;
-        if (cursor != null && cursor.moveToFirst()) {
-            download = Download.from(cursor);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                download = Download.from(cursor);
+            }
             cursor.close();
         }
         return download;

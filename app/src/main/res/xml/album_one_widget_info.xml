@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="com.grunskis.albumone.albums.AlbumsActivity"
+    android:initialKeyguardLayout="@layout/widget_album_one"
+    android:initialLayout="@layout/widget_album_one"
+    android:minHeight="@dimen/widget_min_height"
+    android:minResizeHeight="@dimen/widget_min_size"
+    android:minResizeWidth="@dimen/widget_min_size"
+    android:minWidth="@dimen/widget_min_width"
+    android:previewImage="@drawable/widget_preview"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

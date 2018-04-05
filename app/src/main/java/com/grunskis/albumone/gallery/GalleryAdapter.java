@@ -44,12 +44,12 @@ class GalleryAdapter extends PagerAdapter {
         mDisplayWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
     }
 
-    public void setPhotos(List<Photo> photos) {
-        mPhotos = new ArrayList<>(photos);
-    }
-
     public void addPhotos(List<Photo> photos) {
+        if (mPhotos == null) {
+            mPhotos = new ArrayList<>();
+        }
         mPhotos.addAll(photos);
+
         notifyDataSetChanged();
     }
 
@@ -84,7 +84,11 @@ class GalleryAdapter extends PagerAdapter {
 
     @Override
     public int getCount() {
-        return mPhotos.size();
+        if (mPhotos == null) {
+            return 0;
+        } else {
+            return mPhotos.size();
+        }
     }
 
     @Override

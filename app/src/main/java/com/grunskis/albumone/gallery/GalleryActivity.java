@@ -14,7 +14,9 @@ import com.grunskis.albumone.data.Album;
 import com.grunskis.albumone.data.Photo;
 import com.grunskis.albumone.data.source.AlbumsRepository;
 import com.grunskis.albumone.data.source.Callbacks;
+import com.grunskis.albumone.data.source.LoaderProvider;
 import com.grunskis.albumone.data.source.RemoteDataSource;
+import com.grunskis.albumone.data.source.local.LocalDataSource;
 import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
 import com.grunskis.albumone.data.source.remote.UnsplashDataSource;
 
@@ -27,18 +29,29 @@ public class GalleryActivity
         implements View.OnClickListener, Callbacks.GetAlbumPhotosCallback {
     public static final String EXTRA_ALBUM = "com.grunskis.albumone.gallery.EXTRA_ALBUM";
     public static final String EXTRA_POSITION = "com.grunskis.albumone.gallery.EXTRA_POSITION";
-    public static final String EXTRA_PHOTOS = "com.grunskis.albumone.gallery.EXTRA_PHOTOS";
     public static final String EXTRA_IS_SLIDESHOW = "com.grunskis.albumone.gallery.EXTRA_IS_SLIDESHOw";
+    public static final String EXTRA_PHOTOS = "com.grunskis.albumone.gallery.EXTRA_PHOTOS";
 
-    // TODO: 3/29/2018 read this value from settings
+    private static final String BUNDLE_VPSTATE = "BUNDLE_VPSTATE";
+    private static final String BUNDLE_PHOTOS = "BUNDLE_PHOTOS";
+
     private static final int SLIDESHOW_DELAY_MILLIS = 5000;
 
     private Album mAlbum;
     private GalleryAdapter mAdapter;
     private AlbumsRepository mRepository;
-
+    private ViewPager mViewPager;
     private Handler mSlideshowHandler;
     private Runnable mSlideshowRunnable;
+    private boolean mIsSlideshow;
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putParcelable(BUNDLE_VPSTATE, mViewPager.onSaveInstanceState());
+        outState.putParcelable(BUNDLE_PHOTOS, Parcels.wrap(mAdapter.getPhotos()));
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,19 +62,15 @@ public class GalleryActivity
         setContentView(R.layout.activity_gallery);
 
         Intent intent = getIntent();
-        boolean isSlideshow = intent.getBooleanExtra(EXTRA_IS_SLIDESHOW, false);
-        int position = intent.getIntExtra(EXTRA_POSITION, 0);
-        final List<Photo> photos = Parcels.unwrap(intent.getParcelableExtra(EXTRA_PHOTOS));
+        mIsSlideshow = intent.getBooleanExtra(EXTRA_IS_SLIDESHOW, false);
         mAlbum = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ALBUM));
 
         mAdapter = new GalleryAdapter(this, this);
-        mAdapter.setPhotos(photos);
 
-        final ViewPager viewPager = findViewById(R.id.viewpager);
-        viewPager.setAdapter(mAdapter);
-        viewPager.setCurrentItem(position);
+        mViewPager = findViewById(R.id.viewpager);
+        mViewPager.setAdapter(mAdapter);
 
-        viewPager.addOnPageChangeListener(new ViewPagerLoadMoreListener(mAdapter) {
+        mViewPager.addOnPageChangeListener(new ViewPagerLoadMoreListener(mAdapter) {
             @Override
             public void onLoadMore(int page) {
                 loadAlbumPhotos(page);
@@ -86,24 +95,33 @@ public class GalleryActivity
             }
         }
 
-        mRepository = new AlbumsRepository(remoteDataSource, null);
+        LocalDataSource localDataSource = LocalDataSource.getInstance(
+                getApplicationContext().getContentResolver(),
+                new LoaderProvider(this),
+                getSupportLoaderManager());
 
-        if (isSlideshow) {
-            mSlideshowRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    // TODO: 3/27/2018 add a nice transition
-                    int nextItem = viewPager.getCurrentItem() + 1;
-                    if (nextItem >= photos.size()) {
-                        nextItem = 0;
-                    }
-                    viewPager.setCurrentItem(nextItem, false);
-                    mSlideshowHandler.postDelayed(this, SLIDESHOW_DELAY_MILLIS);
-                }
-            };
+        mRepository = new AlbumsRepository(remoteDataSource, localDataSource);
 
-            mSlideshowHandler = new Handler();
-            mSlideshowHandler.postDelayed(mSlideshowRunnable, SLIDESHOW_DELAY_MILLIS);
+        if (savedInstanceState != null) {
+            List<Photo> photos = Parcels.unwrap(savedInstanceState.getParcelable(BUNDLE_PHOTOS));
+            mAdapter.addPhotos(photos);
+            mViewPager.onRestoreInstanceState(savedInstanceState.getParcelable(BUNDLE_VPSTATE));
+            startSlideshow(photos);
+        } else {
+            List<Photo> photos = null;
+            if (intent.hasExtra(EXTRA_PHOTOS)) {
+                photos = Parcels.unwrap(intent.getParcelableExtra(EXTRA_PHOTOS));
+            }
+            if (photos != null && photos.size() > 0) {
+                mAdapter.addPhotos(photos);
+
+                int position = intent.getIntExtra(EXTRA_POSITION, 0);
+                mViewPager.setCurrentItem(position);
+
+                startSlideshow(photos);
+            } else {
+                loadAlbumPhotos(1);
+            }
         }
     }
 
@@ -142,10 +160,31 @@ public class GalleryActivity
     @Override
     public void onAlbumPhotosLoaded(List<Photo> photos) {
         showAlbumPhotos(photos);
+        startSlideshow(photos);
     }
 
     @Override
     public void onDataNotAvailable() {
         // TODO: 4/4/2018 implement
+    }
+
+    private void startSlideshow(final List<Photo> photos) {
+        if (mIsSlideshow && mSlideshowRunnable == null) {
+            mSlideshowRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    // TODO: 3/27/2018 add a nice transition
+                    int nextItem = mViewPager.getCurrentItem() + 1;
+                    if (nextItem >= photos.size()) {
+                        nextItem = 0;
+                    }
+                    mViewPager.setCurrentItem(nextItem, false);
+                    mSlideshowHandler.postDelayed(this, SLIDESHOW_DELAY_MILLIS);
+                }
+            };
+
+            mSlideshowHandler = new Handler();
+            mSlideshowHandler.postDelayed(mSlideshowRunnable, SLIDESHOW_DELAY_MILLIS);
+        }
     }
 }

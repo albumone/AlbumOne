@@ -17,4 +17,6 @@
     <string name="album_cover_photo">Album cover photo</string>
     <string name="backend_google_photos">Google Photos</string>
     <string name="backend_unsplash">Unsplash</string>
+    <string name="widget_name">Album One</string>
+    <string name="choose_album">Choose album</string>
 </resources>

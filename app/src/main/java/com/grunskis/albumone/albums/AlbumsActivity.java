@@ -1,5 +1,6 @@
 package com.grunskis.albumone.albums;
 
+import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -42,6 +43,7 @@ import com.grunskis.albumone.data.source.local.LocalDataSource;
 import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
 import com.grunskis.albumone.data.source.remote.UnsplashDataSource;
 import com.grunskis.albumone.util.StethoUtil;
+import com.grunskis.albumone.widget.AlbumOneWidget;
 import com.jakewharton.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 
@@ -69,6 +71,7 @@ public class AlbumsActivity
     private static final int REQUEST_AUTH_GOOGLE_PHOTOS = 1;
     private static final int REQUEST_AUTH_UNSPLASH = 2;
 
+    private int mAppWidgetId;
     protected FloatingActionButton mFABAdd;
     protected RecyclerView mRecyclerView;
     protected LinearLayoutManager mLayoutManager;
@@ -143,6 +146,21 @@ public class AlbumsActivity
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID,
+                    AppWidgetManager.INVALID_APPWIDGET_ID);
+        }
+
+        if (isWidgetConfiguration()) {
+            // prepare response in case user abandons the configuration activity
+            Intent resultValue = new Intent();
+            resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+            setResult(RESULT_CANCELED, resultValue);
+
+            setTitle(getString(R.string.choose_album));
+        }
+
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -192,14 +210,14 @@ public class AlbumsActivity
         RemoteType remoteType = (RemoteType) getIntent().getSerializableExtra(EXTRA_REMOTE_TYPE);
         mShowLocalAlbums = remoteType == null;
 
-        if (!mShowLocalAlbums) {
+        if (!mShowLocalAlbums || isWidgetConfiguration()) {
             mFABAdd.setVisibility(View.GONE);
             mFABUnsplash.setVisibility(View.GONE);
             mFABGooglePhotos.setVisibility(View.GONE);
         }
 
         RemoteDataSource remoteDataSource = null;
-        if (!mShowLocalAlbums) {
+        if (remoteType != null) {
             switch (remoteType) {
                 case GOOGLE_PHOTOS:
                     remoteDataSource = PicasaWebDataSource.getInstance();
@@ -252,6 +270,10 @@ public class AlbumsActivity
         }
     }
 
+    private boolean isWidgetConfiguration() {
+        return mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID;
+    }
+
     @Override
     public void onDestroy() {
         if (mLocalBroadcastManager != null) {
@@ -288,10 +310,26 @@ public class AlbumsActivity
 
     @Override
     public void onAlbumClick(Album album) {
-        showAlbumDetails(album);
+        if (isWidgetConfiguration()) {
+            saveWidgetData(album);
+        } else {
+            showAlbumDetails(album);
+        }
     }
 
-    public void showAlbumDetails(Album album) {
+    private void saveWidgetData(Album album) {
+        AlbumOneWidget.saveWidgetData(this, mAppWidgetId, album.getId());
+
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+        AlbumOneWidget.updateWidget(this, appWidgetManager, mAppWidgetId, album);
+
+        Intent resultValue = new Intent();
+        resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+        setResult(RESULT_OK, resultValue);
+        finish();
+    }
+
+    private void showAlbumDetails(Album album) {
         Intent intent = new Intent(this, AlbumDetailActivity.class);
         intent.putExtra(AlbumDetailActivity.EXTRA_ALBUM, Parcels.wrap(album));
         intent.putExtra(AlbumDetailActivity.EXTRA_LOCAL_ONLY, mShowLocalAlbums);
