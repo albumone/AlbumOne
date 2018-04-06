@@ -49,22 +49,6 @@ public class AlbumsRepository {
         });
     }
 
-    public void saveAlbum(Album album, List<Photo> photos) {
-        mLocalDataSource.saveAlbum(album, photos);
-    }
-
-    public void deleteAllAlbums() {
-        mLocalDataSource.deleteAllAlbums();
-    }
-
-    public void deleteAlbumPhotos(String albumId) {
-        mLocalDataSource.deleteAlbumPhotos(albumId);
-    }
-
-    public void savePhoto(Photo photo) {
-        mLocalDataSource.savePhoto(photo);
-    }
-
     public void getAlbumPhotos(final Album album, final int page,
                                final Callbacks.GetAlbumPhotosCallback callback) {
         if (mRemoteDataSource != null) {

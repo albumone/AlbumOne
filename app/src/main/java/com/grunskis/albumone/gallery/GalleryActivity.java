@@ -77,9 +77,9 @@ public class GalleryActivity
             }
         });
 
-        if (Build.VERSION.SDK_INT >= 21) {
-            // TODO: 3/27/2018 use theme with version qualifier instead
-            getWindow().setStatusBarColor(getResources().getColor(android.R.color.black));
+        // TODO: 3/27/2018 use theme with version qualifier instead
+        if (Build.VERSION.SDK_INT >= 23) {
+            getWindow().setStatusBarColor(getColor(android.R.color.black));
         }
 
         RemoteDataSource remoteDataSource = null;
