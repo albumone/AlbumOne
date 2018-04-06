@@ -27,6 +27,7 @@ import android.widget.ProgressBar;
 
 import com.grunskis.albumone.DisplayHelpers;
 import com.grunskis.albumone.EndlessRecyclerViewScrollListener;
+import com.grunskis.albumone.GlideApp;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.data.Album;
 import com.grunskis.albumone.data.Photo;
@@ -39,9 +40,6 @@ import com.grunskis.albumone.data.source.local.LocalDataSource;
 import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
 import com.grunskis.albumone.data.source.remote.UnsplashDataSource;
 import com.grunskis.albumone.gallery.GalleryActivity;
-import com.grunskis.albumone.util.StethoUtil;
-import com.jakewharton.picasso.OkHttp3Downloader;
-import com.squareup.picasso.Picasso;
 
 import org.parceler.Parcels;
 
@@ -49,7 +47,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.OkHttpClient;
 import timber.log.Timber;
 
 public class AlbumDetailActivity
@@ -372,23 +369,16 @@ public class AlbumDetailActivity
     }
 
     private static class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.ViewHolder> {
-        private Picasso mPicasso;
         private List<Photo> mPhotos;
         private int mDisplayWidth;
+        private Context mContext;
         private PhotoClickListener mClickListener;
 
         PhotosAdapter(Context context, PhotoClickListener clickListener) {
-            OkHttpClient.Builder builder = StethoUtil.addNetworkInterceptor(
-                    new OkHttpClient.Builder());
-            mPicasso = new Picasso.Builder(context)
-                    .downloader(new OkHttp3Downloader(builder.build()))
-                    .loggingEnabled(true)
-                    .indicatorsEnabled(true) // TODO: 3/19/2018 debug only
-                    .build();
+            mContext = context;
+            mClickListener = clickListener;
 
             mDisplayWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-
-            mClickListener = clickListener;
         }
 
         void addPhotos(List<Photo> photos) {
@@ -428,15 +418,14 @@ public class AlbumDetailActivity
             holder.itemView.getLayoutParams().height = DisplayHelpers.calculateOptimalPhotoHeight(
                     mDisplayWidth, photo);
 
+            Uri uri;
             String localPath = photo.getDownloadPath();
             if (localPath != null && localPath.length() > 0) {
-                File file = new File(photo.getDownloadPath());
-                if (file.exists()) {
-                    holder.mPhoto.setImageURI(Uri.fromFile(file));
-                }
+                uri = Uri.fromFile(new File(localPath));
             } else {
-                mPicasso.load(photo.getSmallUri()).into(holder.mPhoto);
+                uri = photo.getSmallUri();
             }
+            GlideApp.with(mContext).load(uri).into(holder.mPhoto);
 
             holder.mPhoto.setOnClickListener(new View.OnClickListener() {
                 @Override

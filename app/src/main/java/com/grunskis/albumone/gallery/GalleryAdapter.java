@@ -1,7 +1,6 @@
 package com.grunskis.albumone.gallery;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v4.view.PagerAdapter;
@@ -10,38 +9,22 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.github.chrisbanes.photoview.PhotoView;
+import com.grunskis.albumone.GlideApp;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.data.Photo;
-import com.grunskis.albumone.util.StethoUtil;
-import com.jakewharton.picasso.OkHttp3Downloader;
-import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.OkHttpClient;
-
 class GalleryAdapter extends PagerAdapter {
-    private Picasso mPicasso;
     private Context mContext;
     private List<Photo> mPhotos;
-    private int mDisplayWidth;
     private View.OnClickListener mClickListener;
 
     GalleryAdapter(Context context, View.OnClickListener clickListener) {
         mContext = context;
         mClickListener = clickListener;
-
-        OkHttpClient.Builder builder = StethoUtil.addNetworkInterceptor(
-                new OkHttpClient.Builder());
-        mPicasso = new Picasso.Builder(context)
-                .downloader(new OkHttp3Downloader(builder.build()))
-                .loggingEnabled(true)
-                .indicatorsEnabled(true) // TODO: 3/19/2018 enable in debug only
-                .build();
-
-        mDisplayWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
     }
 
     public void addPhotos(List<Photo> photos) {
@@ -67,14 +50,14 @@ class GalleryAdapter extends PagerAdapter {
         PhotoView photoView = layout.findViewById(R.id.photo);
 
         Photo photo = mPhotos.get(position);
+
+        Uri uri;
         if (photo.getDownloadPath() != null) {
-            File file = new File(photo.getDownloadPath());
-            photoView.setImageURI(Uri.fromFile(file));
+            uri = Uri.fromFile(new File(photo.getDownloadPath()));
         } else {
-            mPicasso.load(photo.getSmallUri())
-                    .resize(mDisplayWidth, 0)
-                    .into(photoView);
+            uri = photo.getSmallUri();
         }
+        GlideApp.with(mContext).load(uri).into(photoView);
 
         layout.setOnClickListener(mClickListener);
 

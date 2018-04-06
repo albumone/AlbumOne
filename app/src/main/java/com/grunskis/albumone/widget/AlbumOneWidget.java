@@ -30,6 +30,7 @@ public class AlbumOneWidget extends AppWidgetProvider {
                                     int appWidgetId, Album album) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_album_one);
 
+        // TODO: 4/6/2018 use glide to load and save cache the bitmap
         File file = new File(album.getCoverPhoto().getDownloadPath());
         Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
         views.setImageViewBitmap(R.id.iv_album_cover_photo, bitmap);
