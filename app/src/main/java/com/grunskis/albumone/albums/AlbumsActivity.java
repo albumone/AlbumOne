@@ -338,6 +338,10 @@ public class AlbumsActivity
         setLoadingIndicator(false);
 
         for (Album album : albums) {
+            if (album.getCoverPhoto().getId() != null) {
+                album.getCoverPhoto().refreshFromDb(this);
+            }
+
             Download download = mAlbumsRepository.getDownload(album.getRemoteId());
             if (download == null) {
                 album.setDownloadState(Album.DownloadState.NOT_DOWNLOADED);

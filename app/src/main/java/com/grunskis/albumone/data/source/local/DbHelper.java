@@ -45,10 +45,12 @@ public class DbHelper {
         return ContentUris.parseId(uri);
     }
 
-    public static void createPhoto(ContentResolver contentResolver, Photo photo) {
-        contentResolver.insert(
+    public static long createPhoto(ContentResolver contentResolver, Photo photo) {
+        Uri uri = contentResolver.insert(
                 AlbumOnePersistenceContract.PhotoEntry.CONTENT_URI,
                 AlbumValues.from(photo));
+
+        return ContentUris.parseId(uri);
     }
 
     public static void updateAlbumCoverPhoto(ContentResolver contentResolver, Album album,
@@ -68,5 +70,24 @@ public class DbHelper {
                 AlbumOnePersistenceContract.DownloadEntry._ID + " = ?",
                 new String[]{String.valueOf(downloadId)}
         );
+    }
+
+    public static Photo getPhotoById(Context context, long id) {
+        ContentResolver contentResolver = context.getContentResolver();
+        Cursor cursor = contentResolver.query(
+                AlbumOnePersistenceContract.PhotoEntry.buildUriWith(id),
+                AlbumOnePersistenceContract.PhotoEntry.COLUMNS,
+                AlbumOnePersistenceContract.PhotoEntry._ID + " = ?",
+                new String[]{String.valueOf(id)},
+                null);
+
+        Photo photo = null;
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                photo = Photo.from(cursor);
+            }
+            cursor.close();
+        }
+        return photo;
     }
 }

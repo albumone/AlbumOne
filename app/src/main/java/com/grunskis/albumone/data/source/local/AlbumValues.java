@@ -9,14 +9,8 @@ public class AlbumValues {
     public static ContentValues from(Album album) {
         ContentValues values = new ContentValues();
         values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_TITLE, album.getTitle());
-        values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_PATH,
-                album.getCoverPhoto().getDownloadPath());
-        values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_WIDTH,
-                album.getCoverPhoto().getWidth());
-        values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_HEIGHT,
-                album.getCoverPhoto().getHeight());
-        values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_REMOTE_ID,
-                album.getCoverPhoto().getRemoteId());
+        values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_ID,
+                album.getCoverPhoto().getId());
         values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_ID,
                 album.getRemoteId());
         int remoteType = album.getRemoteType().getValue();
@@ -39,8 +33,8 @@ public class AlbumValues {
 
     public static ContentValues albumCoverPhoto(Photo photo) {
         ContentValues values = new ContentValues();
-        values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_PATH,
-                photo.getDownloadPath());
+        values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_ID,
+                photo.getId());
         return values;
     }
 

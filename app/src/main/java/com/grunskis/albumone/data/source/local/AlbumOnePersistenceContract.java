@@ -32,21 +32,14 @@ public class AlbumOnePersistenceContract {
                 .build();
 
         public static final String COLUMN_NAME_TITLE = "title";
-        // TODO: 3/22/2018 cover_photo_id
-        public static final String COLUMN_NAME_COVER_PHOTO_PATH = "cover_photo_path";
-        public static final String COLUMN_NAME_COVER_PHOTO_WIDTH = "cover_photo_width";
-        public static final String COLUMN_NAME_COVER_PHOTO_HEIGHT = "cover_photo_height";
-        public static final String COLUMN_NAME_COVER_PHOTO_REMOTE_ID = "cover_photo_remote_id";
+        public static final String COLUMN_NAME_COVER_PHOTO_ID = "cover_photo_id";
         public static final String COLUMN_NAME_REMOTE_ID = "remote_id";
         public static final String COLUMN_NAME_REMOTE_TYPE = "remote_type";
 
         public static String[] ALBUM_COLUMNS = new String[] {
                 AlbumEntry._ID,
                 AlbumEntry.COLUMN_NAME_TITLE,
-                AlbumEntry.COLUMN_NAME_COVER_PHOTO_PATH,
-                AlbumEntry.COLUMN_NAME_COVER_PHOTO_WIDTH,
-                AlbumEntry.COLUMN_NAME_COVER_PHOTO_HEIGHT,
-                AlbumEntry.COLUMN_NAME_COVER_PHOTO_REMOTE_ID,
+                AlbumEntry.COLUMN_NAME_COVER_PHOTO_ID,
                 AlbumEntry.COLUMN_NAME_REMOTE_ID,
                 AlbumEntry.COLUMN_NAME_REMOTE_TYPE,
         };
@@ -70,7 +63,7 @@ public class AlbumOnePersistenceContract {
         public static final String COLUMN_NAME_HEIGHT = "height";
         public static final String COLUMN_NAME_REMOTE_ID = "remote_id";
 
-        public static String[] PHOTO_COLUMNS = new String[]{
+        public static String[] COLUMNS = new String[]{
                 PhotoEntry._ID,
                 PhotoEntry.COLUMN_NAME_URL,
                 PhotoEntry.COLUMN_NAME_ALBUM_ID,
@@ -79,8 +72,8 @@ public class AlbumOnePersistenceContract {
                 PhotoEntry.COLUMN_NAME_REMOTE_ID,
         };
 
-        public static Uri buildUriWith(String id) {
-            return CONTENT_URI.buildUpon().appendPath(id).build();
+        public static Uri buildUriWith(long id) {
+            return CONTENT_URI.buildUpon().appendPath(String.valueOf(id)).build();
         }
     }
 

@@ -99,7 +99,7 @@ public class LocalDataSource {
         mContentResolver.delete(AlbumOnePersistenceContract.AlbumEntry.CONTENT_URI, null, null);
     }
 
-    public void savePhoto(Photo photo) {
+    private void savePhoto(Photo photo) {
         ContentValues values = AlbumValues.from(photo);
         mContentResolver.insert(AlbumOnePersistenceContract.PhotoEntry.CONTENT_URI, values);
     }

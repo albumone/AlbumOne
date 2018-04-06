@@ -29,7 +29,7 @@ public class LoaderProvider {
         return new CursorLoader(
                 mContext,
                 AlbumOnePersistenceContract.PhotoEntry.CONTENT_URI,
-                AlbumOnePersistenceContract.PhotoEntry.PHOTO_COLUMNS,
+                AlbumOnePersistenceContract.PhotoEntry.COLUMNS,
                 AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_ALBUM_ID + " = ?",
                 new String[]{albumId},
                 null

@@ -39,21 +39,15 @@ public class Album {
                 AlbumOnePersistenceContract.AlbumEntry._ID));
         String title = cursor.getString(cursor.getColumnIndexOrThrow(
                         AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_TITLE));
-        String coverPhotoUrl = cursor.getString(cursor.getColumnIndexOrThrow(
-                AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_PATH));
-        int coverPhotoWidth = cursor.getInt(cursor.getColumnIndexOrThrow(
-                AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_WIDTH));
-        int coverPhotoHeight = cursor.getInt(cursor.getColumnIndexOrThrow(
-                AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_HEIGHT));
-        String coverPhotoRemoteId = cursor.getString(cursor.getColumnIndexOrThrow(
-                AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_REMOTE_ID));
+        long coverPhotoId = cursor.getLong(cursor.getColumnIndexOrThrow(
+                AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_ID));
         String remoteId = cursor.getString(cursor.getColumnIndexOrThrow(
                 AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_ID));
         RemoteType remoteType = RemoteType.forValue(cursor.getInt(cursor.getColumnIndexOrThrow(
                 AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_TYPE)));
 
-        Photo coverPhoto = new Photo(null, coverPhotoUrl, coverPhotoWidth, coverPhotoHeight,
-                coverPhotoRemoteId);
+        Photo coverPhoto = new Photo();
+        coverPhoto.setId(coverPhotoId);
 
         return new Album(id, title, coverPhoto, remoteId, remoteType);
     }

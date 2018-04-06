@@ -12,10 +12,7 @@ public class AlbumOneDbHelper extends SQLiteOpenHelper {
             "CREATE TABLE " + AlbumOnePersistenceContract.AlbumEntry.TABLE_NAME + " (" +
                     AlbumOnePersistenceContract.AlbumEntry._ID + " INTEGER PRIMARY KEY," +
                     AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_TITLE + " TEXT," +
-                    AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_PATH + " TEXT," +
-                    AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_WIDTH + " INTEGER," +
-                    AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_HEIGHT + " INTEGER," +
-                    AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_REMOTE_ID + " TEXT," +
+                    AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_ID + " INTEGER," +
                     AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_ID + " TEXT," +
                     AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_TYPE + " INTEGER)";
 

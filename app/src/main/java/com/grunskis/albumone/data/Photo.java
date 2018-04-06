@@ -1,14 +1,17 @@
 package com.grunskis.albumone.data;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
 import com.grunskis.albumone.data.source.local.AlbumOnePersistenceContract;
+import com.grunskis.albumone.data.source.local.DbHelper;
 
 import org.parceler.Parcel;
 
 @Parcel
 public class Photo {
+    Long mId;
     Album mAlbum;
     Uri mSmallUri;
     int mWidth;
@@ -19,8 +22,10 @@ public class Photo {
     public Photo() {
     }
 
-    public Photo(Album album, String smallUri, int width, int height, String remoteId) {
+    public Photo(Long id, Album album, String smallUri, int width, int height, String remoteId) {
+        mId = id;
         mAlbum = album;
+        // TODO: 4/6/2018 use uris also for local files
         if (smallUri != null) {
             if (smallUri.startsWith("http")) {
                 mSmallUri = Uri.parse(smallUri);
@@ -33,7 +38,13 @@ public class Photo {
         mRemoteId = remoteId;
     }
 
+    public Photo(Album album, String smallUri, int width, int height, String remoteId) {
+        this(null, album, smallUri, width, height, remoteId);
+    }
+
     public static Photo from(Cursor cursor) {
+        Long id = cursor.getLong(
+                cursor.getColumnIndex(AlbumOnePersistenceContract.PhotoEntry._ID));
         String url = cursor.getString(
                 cursor.getColumnIndex(AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_URL));
         int width = cursor.getInt(
@@ -42,7 +53,15 @@ public class Photo {
                 cursor.getColumnIndex(AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_HEIGHT));
         String remoteId = cursor.getString(
                 cursor.getColumnIndex(AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_REMOTE_ID));
-        return new Photo(null, url, width, height, remoteId);
+        return new Photo(id, null, url, width, height, remoteId);
+    }
+
+    public Long getId() {
+        return mId;
+    }
+
+    public void setId(Long id) {
+        mId = id;
     }
 
     public Uri getSmallUri() {
@@ -83,5 +102,15 @@ public class Photo {
 
     public String getRemoteId() {
         return mRemoteId;
+    }
+
+    public void refreshFromDb(Context context) {
+        Photo photo = DbHelper.getPhotoById(context, mId);
+
+        mSmallUri = photo.getSmallUri();
+        mDownloadPath = photo.getDownloadPath();
+        mWidth = photo.getWidth();
+        mHeight = photo.getHeight();
+        mRemoteId = photo.getRemoteId();
     }
 }

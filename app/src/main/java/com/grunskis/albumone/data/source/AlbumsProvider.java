@@ -2,6 +2,7 @@ package com.grunskis.albumone.data.source;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -16,6 +17,7 @@ public class AlbumsProvider extends ContentProvider {
     private static final int ALBUMS = 100;
     private static final int ALBUM = 101;
     private static final int PHOTOS = 200;
+    private static final int PHOTO = 201;
     private static final int DOWNLOADS = 300;
     private static final int DOWNLOAD = 301;
 
@@ -27,9 +29,12 @@ public class AlbumsProvider extends ContentProvider {
         final String authority = AlbumOnePersistenceContract.CONTENT_AUTHORITY;
 
         matcher.addURI(authority, AlbumOnePersistenceContract.AlbumEntry.TABLE_NAME, ALBUMS);
-        matcher.addURI(authority, AlbumOnePersistenceContract.AlbumEntry.TABLE_NAME + "/*", ALBUM);
+        matcher.addURI(authority, AlbumOnePersistenceContract.AlbumEntry.TABLE_NAME + "/*",
+                ALBUM);
 
         matcher.addURI(authority, AlbumOnePersistenceContract.PhotoEntry.TABLE_NAME, PHOTOS);
+        matcher.addURI(authority, AlbumOnePersistenceContract.PhotoEntry.TABLE_NAME + "/*",
+                PHOTO);
 
         matcher.addURI(authority, AlbumOnePersistenceContract.DownloadEntry.TABLE_NAME, DOWNLOADS);
         matcher.addURI(authority, AlbumOnePersistenceContract.DownloadEntry.TABLE_NAME + "/*",
@@ -88,6 +93,18 @@ public class AlbumsProvider extends ContentProvider {
                 );
                 break;
 
+            case PHOTO:
+                retCursor = mDbHelper.getReadableDatabase().query(
+                        AlbumOnePersistenceContract.PhotoEntry.TABLE_NAME,
+                        projection,
+                        AlbumOnePersistenceContract.PhotoEntry._ID + " = ?",
+                        new String[]{uri.getLastPathSegment()},
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+
             case DOWNLOAD:
             case DOWNLOADS:
                 retCursor = mDbHelper.getReadableDatabase().query(
@@ -103,7 +120,10 @@ public class AlbumsProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
-        retCursor.setNotificationUri(getContext().getContentResolver(), uri);
+        Context context = getContext();
+        if (context != null) {
+            retCursor.setNotificationUri(context.getContentResolver(), uri);
+        }
         return retCursor;
     }
 
@@ -148,7 +168,7 @@ public class AlbumsProvider extends ContentProvider {
                 _id = db.insert(AlbumOnePersistenceContract.PhotoEntry.TABLE_NAME, null,
                         contentValues);
                 if (_id > 0) {
-                    returnUri = AlbumOnePersistenceContract.PhotoEntry.buildUriWith(String.valueOf(_id));
+                    returnUri = AlbumOnePersistenceContract.PhotoEntry.buildUriWith(_id);
                 } else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 }
@@ -167,7 +187,10 @@ public class AlbumsProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+        Context context = getContext();
+        if (context != null) {
+            context.getContentResolver().notifyChange(uri, null);
+        }
         return returnUri;
     }
 
@@ -191,8 +214,9 @@ public class AlbumsProvider extends ContentProvider {
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
         int rowsDeleted = db.delete(tableName, selection, selectionArgs);
-        if (selection == null || rowsDeleted != 0) {
-            getContext().getContentResolver().notifyChange(uri, null);
+        Context context = getContext();
+        if (context != null && (selection == null || rowsDeleted != 0)) {
+            context.getContentResolver().notifyChange(uri, null);
         }
         return rowsDeleted;
     }
@@ -219,8 +243,9 @@ public class AlbumsProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
-        if (rowsUpdated != 0) {
-            getContext().getContentResolver().notifyChange(uri, null);
+        Context context = getContext();
+        if (context != null && rowsUpdated != 0) {
+            context.getContentResolver().notifyChange(uri, null);
         }
         return rowsUpdated;
     }

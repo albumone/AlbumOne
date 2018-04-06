@@ -43,7 +43,8 @@ public class DownloadService extends IntentService {
         public void onPhotoDownloaded(Photo photo, String path) {
             photo.setDownloadPath(path);
 
-            DbHelper.createPhoto(mContentResolver, photo);
+            long id = DbHelper.createPhoto(mContentResolver, photo);
+            photo.setId(id);
         }
 
         @Override
