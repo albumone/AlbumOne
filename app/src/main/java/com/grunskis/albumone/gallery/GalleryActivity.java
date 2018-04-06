@@ -146,7 +146,7 @@ public class GalleryActivity
 
     @Override
     public void onClick(View view) {
-        toggleLowProfileMode(); // TODO: 4/4/2018 figure out why this doesn't work anymore
+        toggleLowProfileMode();
     }
 
     public void showAlbumPhotos(List<Photo> photos) {

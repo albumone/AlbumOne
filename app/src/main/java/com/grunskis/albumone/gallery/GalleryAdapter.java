@@ -59,7 +59,7 @@ class GalleryAdapter extends PagerAdapter {
         }
         GlideApp.with(mContext).load(uri).into(photoView);
 
-        layout.setOnClickListener(mClickListener);
+        photoView.setOnClickListener(mClickListener);
 
         container.addView(layout);
         return layout;
