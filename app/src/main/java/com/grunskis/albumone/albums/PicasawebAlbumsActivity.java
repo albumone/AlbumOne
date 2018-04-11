@@ -51,7 +51,8 @@ public class PicasawebAlbumsActivity extends RemoteAlbumsActivity {
                 if (resultCode == RESULT_OK) {
                     String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                     String accountType = data.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE);
-                    Timber.d("Selected Account %s %s", accountName, accountType);
+
+                    Timber.i("Selected Account %s %s", accountName, accountType);
                     mSelectedAccount = new Account(accountName, accountType);
 
                     mAccountManager.getAuthToken(
@@ -61,8 +62,8 @@ public class PicasawebAlbumsActivity extends RemoteAlbumsActivity {
                             this,                           // Your activity
                             new OnTokenAcquired(),          // Callback called when a token is successfully acquired
                             null);    // Callback called if an error occ
-
-                    // TODO: 3/16/2018 handle error
+                } else {
+                    finish();
                 }
                 break;
             case REQUEST_AUTHENTICATE:
@@ -101,10 +102,8 @@ public class PicasawebAlbumsActivity extends RemoteAlbumsActivity {
                     mRemoteDataSource.setAuthToken(authToken);
                     loadAlbums(true);
                 }
-
-                // TODO: 4/4/2018 handle error
             } catch (Exception e) {
-                e.printStackTrace();
+                Timber.e(e);
             }
         }
     }
