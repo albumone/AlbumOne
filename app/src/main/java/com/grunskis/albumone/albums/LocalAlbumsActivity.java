@@ -1,7 +1,10 @@
 package com.grunskis.albumone.albums;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -47,6 +50,10 @@ public class LocalAlbumsActivity
 
     private static final int ALBUMS_LOADER = 1;
 
+    private static final String ACCOUNT = "default";
+    private static final String ACCOUNT_TYPE = "com.grunskis.albumone";
+    private static final long SYNC_INTERVAL = 60 * 60; // sync every hour
+
     private int mAppWidgetId;
 
     private FloatingActionButton mFABAdd;
@@ -69,6 +76,24 @@ public class LocalAlbumsActivity
         mLoaderManager.restartLoader(ALBUMS_LOADER, null, this);
     }
 
+    private static void createSyncAccount(Context context) {
+        Account account = new Account(ACCOUNT, ACCOUNT_TYPE);
+
+        AccountManager accountManager = (AccountManager) context.getSystemService(ACCOUNT_SERVICE);
+        if (accountManager == null) {
+            return;
+        }
+
+        if (accountManager.addAccountExplicitly(account, null, null)) {
+            final String authority = AlbumOnePersistenceContract.CONTENT_AUTHORITY;
+
+            // setup automatic, periodic sync
+            ContentResolver.setIsSyncable(account, authority, 1);
+            ContentResolver.setSyncAutomatically(account, authority, true);
+            ContentResolver.addPeriodicSync(account, authority, Bundle.EMPTY, SYNC_INTERVAL);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,6 +101,8 @@ public class LocalAlbumsActivity
         setContentView(R.layout.activity_albums);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        createSyncAccount(this);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {

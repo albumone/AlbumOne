@@ -38,6 +38,7 @@ abstract public class RemoteAlbumsActivity
 
     private static final String BUNDLE_ALBUMS = "BUNDLE_ALBUMS";
     private static final String BUNDLE_RVSTATE = "BUNDLE_RVSTATE";
+
     protected RemoteDataSource mRemoteDataSource;
     private LocalBroadcastManager mLocalBroadcastManager;
     private BroadcastReceiver mBroadcastReceiver;

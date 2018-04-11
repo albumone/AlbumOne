@@ -15,6 +15,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DbHelper {
+    public static List<Album> getAlbums(ContentResolver contentResolver) {
+        List<Album> albums = new ArrayList<>();
+
+        Cursor cursor = contentResolver.query(
+                AlbumOnePersistenceContract.AlbumEntry.CONTENT_URI,
+                AlbumOnePersistenceContract.AlbumEntry.COLUMNS,
+                null,
+                null,
+                null);
+
+        if (cursor != null) {
+            albums.addAll(LocalDataSource.Albums.from(cursor));
+            cursor.close();
+        }
+
+        return albums;
+    }
+
     public static Album getAlbumById(Context context, long albumId) {
         ContentResolver contentResolver = context.getContentResolver();
         Cursor cursor = contentResolver.query(
