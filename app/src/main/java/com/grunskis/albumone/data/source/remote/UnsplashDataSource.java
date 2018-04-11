@@ -1,5 +1,8 @@
 package com.grunskis.albumone.data.source.remote;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
@@ -11,8 +14,11 @@ import com.grunskis.albumone.data.source.RemoteDataSource;
 import com.grunskis.albumone.util.StethoUtil;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -31,6 +37,8 @@ import timber.log.Timber;
 import static java.lang.Math.round;
 
 public class UnsplashDataSource implements RemoteDataSource {
+    private static final String PREF_AUTH_TOKEN = "PREF_AUTH_TOKEN_UNSPLASH";
+
     private static final int REGULAR_PHOTO_WIDTH = 1080;
     private static final String API_BASE_URL = "https://api.unsplash.com/";
     private static final String API_VERSION = "v1";
@@ -38,20 +46,21 @@ public class UnsplashDataSource implements RemoteDataSource {
     private static UnsplashDataSource INSTANCE = null;
 
     private String mAuthToken;
+    private SharedPreferences mSharedPreferences;
 
-    private UnsplashDataSource() {
+    private UnsplashDataSource(Context context) {
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String authToken = getAuthToken();
+        if (authToken != null) {
+            setAuthToken(authToken);
+        }
     }
 
-    public static UnsplashDataSource getInstance() {
+    public static UnsplashDataSource getInstance(Context context) {
         if (INSTANCE == null) {
-            INSTANCE = new UnsplashDataSource();
+            INSTANCE = new UnsplashDataSource(context);
         }
         return INSTANCE;
-    }
-
-    private int calcPhotoHeight(int fullWidth, int fullHeight) {
-        float ratio = (float) fullWidth / REGULAR_PHOTO_WIDTH;
-        return round((float) fullHeight / ratio);
     }
 
     private UnsplashApi getApiClient() {
@@ -75,63 +84,40 @@ public class UnsplashDataSource implements RemoteDataSource {
         return retrofit.create(UnsplashApi.class);
     }
 
+    private static long parseTimestamp(String timestamp) {
+        // Timestamps come in format that Android can't parse by default - 2016-07-10T11:00:01-05:00
+        // Support for 'X' timezone field is added in Android 24+
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US);
+        long updatedAt = 0;
+        try {
+            StringBuilder sb = new StringBuilder(timestamp);
+            int i = timestamp.lastIndexOf(":");
+            sb.replace(i, i + 1, "");
+            updatedAt = format.parse(sb.toString()).getTime();
+        } catch (ParseException e) {
+            Timber.e(e);
+        }
+        return updatedAt;
+    }
+
+    private static int calcPhotoHeight(int fullWidth, int fullHeight) {
+        float ratio = (float) fullWidth / REGULAR_PHOTO_WIDTH;
+        return round((float) fullHeight / ratio);
+    }
+
+    private String getAuthToken() {
+        return mSharedPreferences.getString(PREF_AUTH_TOKEN, null);
+    }
+
     @Override
     public void setAuthToken(String authToken) {
+        mSharedPreferences.edit().putString(PREF_AUTH_TOKEN, authToken).apply(); // TODO: 4/10/2018 extract this to a base class
         mAuthToken = authToken;
     }
 
     @Override
-    public void getAlbums(int page, final Callbacks.GetAlbumsCallback callback) {
-        UnsplashApi api = getApiClient();
-
-        api.getCollections(page).enqueue(new Callback<List<Collection>>() {
-                @Override
-                public void onResponse(@NonNull Call<List<Collection>> call,
-                                       @NonNull Response<List<Collection>> response) {
-
-                    List<Collection> collections = response.body();
-                    if (response.isSuccessful()) {
-                        if (collections != null && collections.size() > 0) {
-                            List<Album> albums = new ArrayList<>();
-
-                            for (Collection collection : collections) {
-                                Timber.i("Collection title: %s totalPhotos: %d",
-                                        collection.title, collection.totalPhotos);
-
-                                int height = calcPhotoHeight(collection.coverPhoto.width,
-                                        collection.coverPhoto.height);
-                                Photo coverPhoto = new Photo(null,
-                                        collection.coverPhoto.urls.regular, REGULAR_PHOTO_WIDTH,
-                                        height, collection.coverPhoto.id);
-                                albums.add(new Album(collection.title, coverPhoto, collection.id,
-                                        RemoteType.UNSPLASH));
-                            }
-                            callback.onAlbumsLoaded(albums);
-                        } else {
-                            callback.onDataNotAvailable();
-                        }
-                    } else {
-                        try {
-                            ResponseBody error = response.errorBody();
-                            if (error != null) {
-                                Timber.e("Failed to load collections! error: %s",
-                                        error.string());
-                            } else {
-                                Timber.e("Failed to load collections! error: null");
-                            }
-                        } catch (IOException e) {
-                            Timber.e(e);
-                        }
-                        callback.onDataNotAvailable();
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<List<Collection>> call, @NonNull Throwable t) {
-                    Timber.e(t);
-                    callback.onDataNotAvailable();
-                }
-        });
+    public boolean isAuthenticated() {
+        return getAuthToken() != null;
     }
 
     @Override
@@ -184,6 +170,109 @@ public class UnsplashDataSource implements RemoteDataSource {
         });
     }
 
+    @Override
+    public void getAlbum(String remoteId, final Callbacks.GetAlbumCallback callback) {
+        UnsplashApi api = getApiClient();
+
+        api.getCollection(remoteId).enqueue(new Callback<Collection>() {
+            @Override
+            public void onResponse(@NonNull Call<Collection> call,
+                                   @NonNull Response<Collection> response) {
+                if (response.isSuccessful()) {
+                    Collection collection = response.body();
+                    if (collection != null) {
+                        int height = calcPhotoHeight(collection.coverPhoto.width,
+                                collection.coverPhoto.height);
+                        Photo coverPhoto = new Photo(null,
+                                collection.coverPhoto.urls.regular, REGULAR_PHOTO_WIDTH,
+                                height, collection.coverPhoto.id);
+                        long updatedAt = parseTimestamp(collection.updatedAt);
+
+                        callback.onAlbumLoaded(new Album(collection.title, coverPhoto,
+                                collection.id, RemoteType.UNSPLASH, updatedAt));
+                    } else {
+                        callback.onDataNotAvailable();
+                    }
+                } else {
+                    try {
+                        ResponseBody error = response.errorBody();
+                        if (error != null) {
+                            Timber.e("Failed to load collections! error: %s",
+                                    error.string());
+                        } else {
+                            Timber.e("Failed to load collections! error: null");
+                        }
+                    } catch (IOException e) {
+                        Timber.e(e);
+                    }
+                    callback.onDataNotAvailable();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Collection> call, @NonNull Throwable t) {
+                Timber.e(t);
+                callback.onDataNotAvailable();
+            }
+        });
+    }
+
+    @Override
+    public void getAlbums(int page, final Callbacks.GetAlbumsCallback callback) {
+        UnsplashApi api = getApiClient();
+
+        api.getCollections(page).enqueue(new Callback<List<Collection>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Collection>> call,
+                                   @NonNull Response<List<Collection>> response) {
+
+                List<Collection> collections = response.body();
+                if (response.isSuccessful()) {
+                    if (collections != null && collections.size() > 0) {
+                        List<Album> albums = new ArrayList<>();
+
+                        for (Collection collection : collections) {
+                            Timber.i("Collection title: %s totalPhotos: %d",
+                                    collection.title, collection.totalPhotos);
+
+                            int height = calcPhotoHeight(collection.coverPhoto.width,
+                                    collection.coverPhoto.height);
+                            Photo coverPhoto = new Photo(null,
+                                    collection.coverPhoto.urls.regular, REGULAR_PHOTO_WIDTH,
+                                    height, collection.coverPhoto.id);
+                            long updatedAt = parseTimestamp(collection.updatedAt);
+
+                            albums.add(new Album(collection.title, coverPhoto, collection.id,
+                                    RemoteType.UNSPLASH, updatedAt));
+                        }
+                        callback.onAlbumsLoaded(albums);
+                    } else {
+                        callback.onDataNotAvailable();
+                    }
+                } else {
+                    try {
+                        ResponseBody error = response.errorBody();
+                        if (error != null) {
+                            Timber.e("Failed to load collections! error: %s",
+                                    error.string());
+                        } else {
+                            Timber.e("Failed to load collections! error: null");
+                        }
+                    } catch (IOException e) {
+                        Timber.e(e);
+                    }
+                    callback.onDataNotAvailable();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Collection>> call, @NonNull Throwable t) {
+                Timber.e(t);
+                callback.onDataNotAvailable();
+            }
+        });
+    }
+
     interface UnsplashApi {
         @GET("collections/featured")
         Call<List<Collection>> getCollections(@Query("page") int page);
@@ -191,6 +280,9 @@ public class UnsplashDataSource implements RemoteDataSource {
         @GET("collections/{id}/photos")
         Call<List<UnsplashPhoto>> getCollectionPhotos(@Path("id") String collectionId,
                                                       @Query("page") int page);
+
+        @GET("collections/{id}")
+        Call<Collection> getCollection(@Path("id") String collectionId);
     }
 
     static class Urls {
@@ -198,24 +290,6 @@ public class UnsplashDataSource implements RemoteDataSource {
 
         public Urls(String regular) {
             this.regular = regular;
-        }
-    }
-
-    static class Collection {
-        public final String id;
-        public final String title;
-
-        @SerializedName("cover_photo")
-        public final UnsplashPhoto coverPhoto;
-
-        @SerializedName("total_photos")
-        public final int totalPhotos;
-
-        public Collection(String id, String title, UnsplashPhoto coverPhoto, int totalPhotos) {
-            this.id = id;
-            this.title = title;
-            this.coverPhoto = coverPhoto;
-            this.totalPhotos = totalPhotos;
         }
     }
 
@@ -230,6 +304,29 @@ public class UnsplashDataSource implements RemoteDataSource {
             this.urls = urls;
             this.width = width;
             this.height = height;
+        }
+    }
+
+    static class Collection {
+        public final String id;
+        public final String title;
+
+        @SerializedName("cover_photo")
+        public final UnsplashPhoto coverPhoto;
+
+        @SerializedName("total_photos")
+        public final int totalPhotos;
+
+        @SerializedName("updated_at")
+        public final String updatedAt;
+
+        public Collection(String id, String title, UnsplashPhoto coverPhoto, int totalPhotos,
+                          String updatedAt) {
+            this.id = id;
+            this.title = title;
+            this.coverPhoto = coverPhoto;
+            this.totalPhotos = totalPhotos;
+            this.updatedAt = updatedAt;
         }
     }
 

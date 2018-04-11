@@ -8,6 +8,7 @@
     <string name="gallery_photo">Gallery photo</string>
     <string name="photo">Photo</string>
     <string name="slideshow">Slideshow</string>
+    <string name="refresh">Refresh</string>
     <string name="action_done">Done</string>
     <string name="album_downloaded">Album already downloaded…</string>
     <string name="album_download_started">Album download started…</string>
@@ -19,4 +20,5 @@
     <string name="backend_unsplash">Unsplash</string>
     <string name="widget_name">Album One</string>
     <string name="choose_album">Choose album</string>
+    <string name="album_up_to_date">Album already up to date…</string>
 </resources>

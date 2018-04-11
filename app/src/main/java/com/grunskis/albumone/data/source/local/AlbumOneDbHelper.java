@@ -14,7 +14,8 @@ public class AlbumOneDbHelper extends SQLiteOpenHelper {
                     AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_TITLE + " TEXT," +
                     AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_ID + " INTEGER," +
                     AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_ID + " TEXT," +
-                    AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_TYPE + " INTEGER)";
+                    AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_TYPE + " INTEGER," +
+                    AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_UPDATED_AT + " INTEGER)";
 
     private static final String SQL_CREATE_PHOTOS_TABLE =
             "CREATE TABLE " + AlbumOnePersistenceContract.PhotoEntry.TABLE_NAME + " (" +

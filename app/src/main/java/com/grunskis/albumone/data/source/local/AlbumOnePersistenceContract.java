@@ -35,17 +35,19 @@ public class AlbumOnePersistenceContract {
         public static final String COLUMN_NAME_COVER_PHOTO_ID = "cover_photo_id";
         public static final String COLUMN_NAME_REMOTE_ID = "remote_id";
         public static final String COLUMN_NAME_REMOTE_TYPE = "remote_type";
+        public static final String COLUMN_NAME_UPDATED_AT = "updated_at";
 
-        public static String[] ALBUM_COLUMNS = new String[] {
+        public static String[] COLUMNS = new String[]{
                 AlbumEntry._ID,
                 AlbumEntry.COLUMN_NAME_TITLE,
                 AlbumEntry.COLUMN_NAME_COVER_PHOTO_ID,
                 AlbumEntry.COLUMN_NAME_REMOTE_ID,
                 AlbumEntry.COLUMN_NAME_REMOTE_TYPE,
+                AlbumEntry.COLUMN_NAME_UPDATED_AT
         };
 
-        public static Uri buildUriWith(String id) {
-            return CONTENT_URI.buildUpon().appendPath(id).build();
+        public static Uri buildUriWith(long id) {
+            return CONTENT_URI.buildUpon().appendPath(String.valueOf(id)).build();
         }
     }
 

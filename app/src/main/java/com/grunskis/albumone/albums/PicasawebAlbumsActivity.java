@@ -8,13 +8,12 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.gms.common.AccountPicker;
+import com.grunskis.albumone.R;
+import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
 
 import timber.log.Timber;
 
 public class PicasawebAlbumsActivity extends RemoteAlbumsActivity {
-    private static final String BACKEND_NAME = "Google Photos";
-    private static final String PREF_AUTH_TOKEN = "PREF_AUTH_TOKEN_GOOGLE_PHOTOS";
-
     private final int PICK_ACCOUNT_REQUEST = 1;
     private final int REQUEST_AUTHENTICATE = 2;
 
@@ -25,17 +24,14 @@ public class PicasawebAlbumsActivity extends RemoteAlbumsActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String authToken = getAuthToken(this);
-        if (authToken == null) {
-            authenticate();
-        } else {
-            setResultAndFinish(authToken);
-        }
-    }
+        setTitle(getString(R.string.backend_google_photos));
 
-    @Override
-    protected String getAuthTokenPreferenceKey() {
-        return PREF_AUTH_TOKEN;
+        mRemoteDataSource = PicasaWebDataSource.getInstance(this);
+        if (mRemoteDataSource.isAuthenticated()) {
+            loadAlbums(savedInstanceState == null);
+        } else {
+            authenticate();
+        }
     }
 
     private void authenticate() {
@@ -102,8 +98,8 @@ public class PicasawebAlbumsActivity extends RemoteAlbumsActivity {
 
                 if (b.containsKey(AccountManager.KEY_AUTHTOKEN)) {
                     String authToken = b.getString(AccountManager.KEY_AUTHTOKEN);
-                    setAuthToken(PicasawebAlbumsActivity.this, authToken);
-                    setResultAndFinish(authToken);
+                    mRemoteDataSource.setAuthToken(authToken);
+                    loadAlbums(true);
                 }
 
                 // TODO: 4/4/2018 handle error

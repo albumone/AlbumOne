@@ -69,6 +69,7 @@ public class AlbumDetailActivity
     private int mMenuItemId = -1;
     private MenuItem mDownloadMenuItem;
     private MenuItem mDoneMenuItem;
+    private MenuItem mRerfreshAlbumItem;
     private AlbumsRepository mRepository;
 
     @Override
@@ -86,6 +87,10 @@ public class AlbumDetailActivity
                 startSlideshow(mPhotosAdapter.getPhotos());
                 return true;
 
+            case R.id.action_refresh:
+                refreshAlbum();
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -93,8 +98,13 @@ public class AlbumDetailActivity
 
     public void downloadAlbum() {
         setDownloadIndicator(true);
-        startAlbumDownload();
-        showAlbumDownloadStarted();
+        startAlbumDownload(false);
+    }
+
+    public void refreshAlbum() {
+        mRerfreshAlbumItem.setVisible(false);
+        setDownloadIndicator(true);
+        startAlbumDownload(true);
     }
 
     public void startSlideshow(List<Photo> photos) {
@@ -119,6 +129,11 @@ public class AlbumDetailActivity
         mDownloadMenuItem = menu.findItem(R.id.action_download);
         mDoneMenuItem = menu.findItem(R.id.action_done);
 
+        mRerfreshAlbumItem = menu.findItem(R.id.action_refresh);
+        if (mAlbum.isLocal()) {
+            mRerfreshAlbumItem.setVisible(true);
+        }
+
         return true;
     }
 
@@ -136,13 +151,30 @@ public class AlbumDetailActivity
             public void onReceive(Context context, Intent intent) {
                 Album album = Parcels.unwrap(
                         intent.getParcelableExtra(DownloadService.EXTRA_ALBUM));
-                onAlbumDownloaded(album);
+                String action = intent.getAction();
+                if (action != null) {
+                    switch (action) {
+                        case DownloadService.BROADCAST_DOWNLOAD_STARTED:
+                            showAlbumDownloadStarted();
+                            break;
+                        case DownloadService.BROADCAST_DOWNLOAD_FINISHED:
+                            onAlbumDownloaded(album);
+                            break;
+                        case DownloadService.BROADCAST_DOWNLOAD_UPTODATE:
+                            showAlbumUpToDate();
+                            break;
+                    }
+                }
             }
         };
 
         mLocalBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
         mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
                 new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
+        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_STARTED));
+        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_UPTODATE));
 
         mAlbum = Parcels.unwrap(getIntent().getParcelableExtra(EXTRA_ALBUM));
 
@@ -161,17 +193,16 @@ public class AlbumDetailActivity
         if (!showOnlyLocal) {
             switch (mAlbum.getRemoteType()) {
                 case GOOGLE_PHOTOS:
-                    remoteDataSource = PicasaWebDataSource.getInstance();
+                    remoteDataSource = PicasaWebDataSource.getInstance(this);
                     break;
 
                 case UNSPLASH:
-                    remoteDataSource = UnsplashDataSource.getInstance();
+                    remoteDataSource = UnsplashDataSource.getInstance(this);
                     break;
             }
         }
 
         LocalDataSource localDataSource = LocalDataSource.getInstance(
-                getApplicationContext().getContentResolver(),
                 new LoaderProvider(this),
                 getSupportLoaderManager());
 
@@ -241,6 +272,9 @@ public class AlbumDetailActivity
 
     public void onAlbumDownloaded(Album album) {
         if (mAlbum.getRemoteId().equals(album.getRemoteId())) {
+            if (mAlbum.isLocal()) {
+                mRerfreshAlbumItem.setVisible(true);
+            }
             setDownloadIndicator(false);
             showAlbumDownloadFinished();
         }
@@ -253,7 +287,7 @@ public class AlbumDetailActivity
         mRepository.getAlbumPhotos(mAlbum, page, this);
     }
 
-    public void setLoadingIndicator(boolean active) {
+    private void setLoadingIndicator(boolean active) {
         if (active) {
             mLoading.setVisibility(View.VISIBLE);
         } else {
@@ -284,7 +318,11 @@ public class AlbumDetailActivity
     }
 
     public void showAlbumPhotos(List<Photo> photos) {
-        mPhotosAdapter.addPhotos(photos);
+        if (mAlbum.isLocal()) {
+            mPhotosAdapter.setPhotos(photos);
+        } else {
+            mPhotosAdapter.addPhotos(photos);
+        }
     }
 
     public void showAlbumDownloadStarted() {
@@ -308,8 +346,19 @@ public class AlbumDetailActivity
     }
 
     public void showAlbumDownloaded() {
+        setDownloadIndicator(false);
+
         Snackbar.make(findViewById(android.R.id.content),
                 getResources().getString(R.string.album_downloaded),
+                Snackbar.LENGTH_LONG).show();
+    }
+
+    public void showAlbumUpToDate() {
+        mRerfreshAlbumItem.setVisible(true);
+        setDownloadIndicator(false);
+
+        Snackbar.make(findViewById(android.R.id.content),
+                getResources().getString(R.string.album_up_to_date),
                 Snackbar.LENGTH_LONG).show();
     }
 
@@ -338,9 +387,10 @@ public class AlbumDetailActivity
         startActivity(intent);
     }
 
-    public void startAlbumDownload() {
+    public void startAlbumDownload(boolean refresh) {
         Intent intent = new Intent(this, DownloadService.class);
         intent.putExtra(DownloadService.EXTRA_ALBUM, Parcels.wrap(mAlbum));
+        intent.putExtra(DownloadService.EXTRA_IS_REFRESH, refresh);
         startService(intent);
     }
 
@@ -381,6 +431,11 @@ public class AlbumDetailActivity
             mDisplayWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
         }
 
+        void setPhotos(List<Photo> photos) {
+            mPhotos = new ArrayList<>(photos);
+            notifyDataSetChanged();
+        }
+
         void addPhotos(List<Photo> photos) {
             if (mPhotos == null) {
                 mPhotos = new ArrayList<>(photos);
@@ -388,13 +443,6 @@ public class AlbumDetailActivity
                 mPhotos.addAll(photos);
             }
             notifyDataSetChanged();
-        }
-
-        void resetAlbumPhotos() {
-            if (mPhotos != null) {
-                mPhotos.clear();
-                notifyDataSetChanged();
-            }
         }
 
         public List<Photo> getPhotos() {

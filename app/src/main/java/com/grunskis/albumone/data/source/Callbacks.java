@@ -17,4 +17,10 @@ public interface Callbacks {
 
         void onDataNotAvailable();
     }
+
+    interface GetAlbumCallback {
+        void onAlbumLoaded(Album album);
+
+        void onDataNotAvailable();
+    }
 }

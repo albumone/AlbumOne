@@ -158,7 +158,7 @@ public class AlbumsProvider extends ContentProvider {
                 _id = db.insert(AlbumOnePersistenceContract.AlbumEntry.TABLE_NAME, null,
                         contentValues);
                 if (_id > 0) {
-                    returnUri = AlbumOnePersistenceContract.AlbumEntry.buildUriWith(String.valueOf(_id));
+                    returnUri = AlbumOnePersistenceContract.AlbumEntry.buildUriWith(_id);
                 } else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 }
@@ -210,6 +210,12 @@ public class AlbumsProvider extends ContentProvider {
                 tableName = AlbumOnePersistenceContract.PhotoEntry.TABLE_NAME;
                 break;
 
+            case PHOTO:
+                tableName = AlbumOnePersistenceContract.PhotoEntry.TABLE_NAME;
+                selection = AlbumOnePersistenceContract.PhotoEntry._ID + " = ?";
+                selectionArgs = new String[]{uri.getLastPathSegment()};
+                break;
+
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -228,7 +234,6 @@ public class AlbumsProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
         int rowsUpdated;
 
-        // TODO: 3/23/2018 could extract id from uri here and create selection + selectionArgs
         switch (match) {
             case ALBUM:
                 rowsUpdated = db.update(AlbumOnePersistenceContract.AlbumEntry.TABLE_NAME, values,

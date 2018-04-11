@@ -16,6 +16,8 @@ public class AlbumValues {
         int remoteType = album.getRemoteType().getValue();
         values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_TYPE,
                 remoteType);
+        values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_UPDATED_AT,
+                album.getUpdatedAt().getTime());
         return values;
     }
 

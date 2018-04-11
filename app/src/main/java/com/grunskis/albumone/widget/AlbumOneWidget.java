@@ -54,16 +54,20 @@ public class AlbumOneWidget extends AppWidgetProvider {
         appWidgetManager.updateAppWidget(appWidgetId, views);
     }
 
-    public static void saveWidgetData(Context context, int appWidgetId, String albumId) {
+    public static void saveWidgetData(Context context, int appWidgetId, long albumId) {
         SharedPreferences.Editor prefs = context.getSharedPreferences(PREFS_NAME, 0).edit();
-        prefs.putString(PREFS_KEY_PREFIX + appWidgetId, albumId);
+        prefs.putLong(PREFS_KEY_PREFIX + appWidgetId, albumId);
         prefs.apply();
     }
 
     public static Album loadAlbum(Context context, int appWidgetId) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, 0);
-        String albumId = prefs.getString(PREFS_KEY_PREFIX + appWidgetId, null);
-        if (albumId == null) {
+
+        long albumId = -1;
+        if (prefs.contains(PREFS_KEY_PREFIX + appWidgetId)) {
+            albumId = prefs.getLong(PREFS_KEY_PREFIX + appWidgetId, -1);
+        }
+        if (albumId == -1) {
             return null;
         }
         return DbHelper.getAlbumById(context, albumId);

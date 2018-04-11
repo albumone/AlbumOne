@@ -14,24 +14,13 @@ public class LoaderProvider {
         mContext = context;
     }
 
-    public Loader<Cursor> createAlbumsLoader() {
-        return new CursorLoader(
-                mContext,
-                AlbumOnePersistenceContract.AlbumEntry.CONTENT_URI,
-                AlbumOnePersistenceContract.AlbumEntry.ALBUM_COLUMNS,
-                null,
-                null,
-                null
-        );
-    }
-
-    public Loader<Cursor> createAlbumPhotosLoader(String albumId) {
+    public Loader<Cursor> createAlbumPhotosLoader(long albumId) {
         return new CursorLoader(
                 mContext,
                 AlbumOnePersistenceContract.PhotoEntry.CONTENT_URI,
                 AlbumOnePersistenceContract.PhotoEntry.COLUMNS,
                 AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_ALBUM_ID + " = ?",
-                new String[]{albumId},
+                new String[]{String.valueOf(albumId)},
                 null
         );
     }

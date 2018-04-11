@@ -86,17 +86,16 @@ public class GalleryActivity
         if (!mAlbum.isLocal()) {
             switch (mAlbum.getRemoteType()) {
                 case GOOGLE_PHOTOS:
-                    remoteDataSource = PicasaWebDataSource.getInstance();
+                    remoteDataSource = PicasaWebDataSource.getInstance(this);
                     break;
 
                 case UNSPLASH:
-                    remoteDataSource = UnsplashDataSource.getInstance();
+                    remoteDataSource = UnsplashDataSource.getInstance(this);
                     break;
             }
         }
 
         LocalDataSource localDataSource = LocalDataSource.getInstance(
-                getApplicationContext().getContentResolver(),
                 new LoaderProvider(this),
                 getSupportLoaderManager());
 

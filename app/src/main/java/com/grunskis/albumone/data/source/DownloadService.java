@@ -2,6 +2,7 @@ package com.grunskis.albumone.data.source;
 
 import android.app.IntentService;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Environment;
@@ -11,6 +12,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.grunskis.albumone.data.Album;
 import com.grunskis.albumone.data.Photo;
+import com.grunskis.albumone.data.source.local.AlbumOnePersistenceContract;
 import com.grunskis.albumone.data.source.local.DbHelper;
 import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
 import com.grunskis.albumone.data.source.remote.UnsplashDataSource;
@@ -19,6 +21,7 @@ import org.parceler.Parcels;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.Call;
@@ -33,7 +36,12 @@ import timber.log.Timber;
 
 public class DownloadService extends IntentService {
     public static final String EXTRA_ALBUM = "com.grunskis.albumone.data.source.EXTRA_ALBUM";
+    public static final String EXTRA_IS_REFRESH =
+            "com.grunskis.albumone.data.source.EXTRA_IS_REFRESH";
+
+    public static final String BROADCAST_DOWNLOAD_STARTED = "BROADCAST_DOWNLOAD_STARTED";
     public static final String BROADCAST_DOWNLOAD_FINISHED = "BROADCAST_DOWNLOAD_FINISHED";
+    public static final String BROADCAST_DOWNLOAD_UPTODATE = "BROADCAST_DOWNLOAD_UPTODATE";
 
     private ContentResolver mContentResolver;
     private RemoteDataSource mRepository;
@@ -78,28 +86,35 @@ public class DownloadService extends IntentService {
             return;
         }
         Album album = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ALBUM));
+        boolean isRefresh = intent.getBooleanExtra(EXTRA_IS_REFRESH, false);
 
         switch (album.getRemoteType()) {
             case GOOGLE_PHOTOS:
-                mRepository = PicasaWebDataSource.getInstance();
+                mRepository = PicasaWebDataSource.getInstance(this);
                 break;
 
             case UNSPLASH:
-                mRepository = UnsplashDataSource.getInstance();
+                mRepository = UnsplashDataSource.getInstance(this);
                 break;
 
             default:
                 return;
         }
 
-        // save album to the DB so that it gets an ID assigned
-        // we don't set the cover image here yet, it will be set later after it's downloaded
-        long albumId = DbHelper.createAlbum(mContentResolver, album);
-        album.setId(albumId);
+        if (!isRefresh) {
+            // save album to the DB so that it gets an ID assigned
+            // we don't set the cover image here yet, it will be set later after it's downloaded
+            long albumId = DbHelper.createAlbum(mContentResolver, album);
+            album.setId(albumId);
+        }
 
         mDownloadId = DbHelper.createDownloadEntry(mContentResolver, album);
 
-        downloadAlbumPhotos(album);
+        if (isRefresh) {
+            refreshAlbumPhotos(album);
+        } else {
+            downloadAlbumPhotos(album);
+        }
     }
 
     private boolean isExternalStorageWritable() {
@@ -113,6 +128,9 @@ public class DownloadService extends IntentService {
         // download album cover photo
         Photo coverPhoto = album.getCoverPhoto();
         coverPhoto.setAlbum(album);
+
+        broadcastDownloadStarted(album);
+
         downloadPhoto(albumDir, coverPhoto, new PhotoDownloadCallback() {
             @Override
             public void onPhotoDownloaded(Photo photo, String path) {
@@ -141,6 +159,10 @@ public class DownloadService extends IntentService {
                     downloadPhoto(albumDir, photo, photoDownloadCallback);
                 }
             }
+
+            @Override
+            public void downloadFinished(Album album) {
+            }
         });
     }
 
@@ -167,6 +189,7 @@ public class DownloadService extends IntentService {
             @Override
             public void onDataNotAvailable() {
                 Timber.i("Downloading album photos finished! title: %s", album.getTitle());
+                callback.downloadFinished(album);
 
                 DbHelper.updateDownloadEntry(mContentResolver, mDownloadId);
 
@@ -176,7 +199,8 @@ public class DownloadService extends IntentService {
         });
     }
 
-    private void downloadPhoto(File directory, final Photo photo, final PhotoDownloadCallback callback) {
+    private void downloadPhoto(File directory, final Photo photo,
+                               final PhotoDownloadCallback callback) {
         final File photoFile = new File(directory, photo.getFilename());
 
         Request request = new Request.Builder().url(photo.getSmallUri().toString()).build();
@@ -194,9 +218,12 @@ public class DownloadService extends IntentService {
                                    @NonNull Response response) throws IOException {
 
                 try (ResponseBody responseBody = response.body()) {
-                    if (!response.isSuccessful())
+                    if (!response.isSuccessful()) {
                         throw new IOException("Unexpected code " + response);
-                    if (responseBody == null) throw new IOException("Response body is null");
+                    }
+                    if (responseBody == null) {
+                        throw new IOException("Response body is null");
+                    }
 
                     BufferedSink sink = Okio.buffer(Okio.sink(photoFile));
                     sink.writeAll(responseBody.source());
@@ -209,14 +236,109 @@ public class DownloadService extends IntentService {
         });
     }
 
+    private void refreshAlbumPhotos(final Album album) {
+        // TODO: 4/11/2018 move this out somewhere
+        final File albumDir = getPrivateAlbumStorageDir(this, album.getRemoteId());
+
+        // create a list of photo remote IDs we currently have in the DB
+        final List<String> photoIds = new ArrayList<>();
+        for (Photo photo : DbHelper.getAlbumPhotosByAlbumId(this, album.getId())) {
+            photoIds.add(photo.getRemoteId());
+        }
+
+        mRepository.getAlbum(album.getRemoteId(), new Callbacks.GetAlbumCallback() {
+            @Override
+            public void onAlbumLoaded(final Album otherAlbum) {
+                if (otherAlbum.getUpdatedAt().after(album.getUpdatedAt())) {
+                    Timber.i("Refreshing album %s...", album.getTitle());
+
+                    downloadAlbumPhotos(album, 1, new DownloadPhotosListener() {
+                        @Override
+                        public void downloadPhotos(List<Photo> photos) {
+                            for (Photo photo : photos) {
+                                String remoteId = photo.getRemoteId();
+                                if (photoIds.contains(remoteId)) {
+                                    // photo still exists in the remote album
+                                    photoIds.remove(remoteId);
+                                }
+
+                                Photo existingPhoto = DbHelper.getPhotoByRemoteId(
+                                        DownloadService.this, remoteId);
+                                if (existingPhoto == null) {
+                                    Timber.i("Downloading new photo remoteId: %s uri: %s",
+                                            remoteId, photo.getSmallUri());
+                                    downloadPhoto(albumDir, photo, photoDownloadCallback);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void downloadFinished(Album album) {
+                            for (String remoteId : photoIds) {
+                                Timber.w("Deleting photo remoteId: %s", remoteId);
+                                // TODO: 4/10/2018 delete files
+                                DbHelper.deletePhotoByRemoteId(mContentResolver, remoteId);
+                            }
+
+                            ContentValues values = new ContentValues();
+                            Photo coverPhoto = otherAlbum.getCoverPhoto();
+                            if (!coverPhoto.getRemoteId().equals(album.getCoverPhoto().getRemoteId())) {
+                                Photo p = DbHelper.getPhotoByRemoteId(
+                                        DownloadService.this, coverPhoto.getRemoteId());
+                                if (p != null) {
+                                    Timber.i("Setting a new cover photo for album title: %s",
+                                            otherAlbum.getTitle());
+                                    values.put(
+                                            AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_ID,
+                                            p.getId());
+
+                                    // update cover photo id for the album we're refreshing
+                                    // later the model values will get updated from the DB
+                                    album.getCoverPhoto().setId(p.getId());
+                                }
+                            }
+                            values.put(AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_UPDATED_AT,
+                                    otherAlbum.getUpdatedAt().getTime());
+                            DbHelper.updateAlbumAfterRefresh(mContentResolver, album, values);
+                        }
+                    });
+                } else {
+                    Timber.i("Album %s up to date %s", album.getTitle(),
+                            album.getUpdatedAt().toString());
+
+                    broadcastDownloadUpToDate(album);
+                }
+            }
+
+            @Override
+            public void onDataNotAvailable() {
+                Timber.e("Failed to get album %s", album.getTitle());
+            }
+        });
+    }
+
+    private void broadcastDownloadStarted(Album album) {
+        Intent intent = new Intent(BROADCAST_DOWNLOAD_STARTED);
+        intent.putExtra(EXTRA_ALBUM, Parcels.wrap(album));
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
     private void broadcastDownloadFinished(Album album) {
         Intent intent = new Intent(BROADCAST_DOWNLOAD_FINISHED);
         intent.putExtra(EXTRA_ALBUM, Parcels.wrap(album));
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+    private void broadcastDownloadUpToDate(Album album) {
+        Intent intent = new Intent(BROADCAST_DOWNLOAD_UPTODATE);
+        intent.putExtra(EXTRA_ALBUM, Parcels.wrap(album));
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
     interface DownloadPhotosListener {
         void downloadPhotos(List<Photo> photos);
+
+        void downloadFinished(Album album);
     }
 
     interface PhotoDownloadCallback {

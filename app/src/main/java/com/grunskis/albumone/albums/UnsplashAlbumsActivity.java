@@ -3,25 +3,22 @@ package com.grunskis.albumone.albums;
 import android.os.Bundle;
 
 import com.grunskis.albumone.BuildConfig;
+import com.grunskis.albumone.R;
+import com.grunskis.albumone.data.source.remote.UnsplashDataSource;
 
 public class UnsplashAlbumsActivity extends RemoteAlbumsActivity {
-    private static final String BACKEND_NAME = "Unsplash";
-    private static final String PREF_AUTH_TOKEN = "PREF_AUTH_TOKEN_UNSPLASH";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // TODO: 4/4/2018 implement oauth
-        String authToken = getAuthToken(this);
-        if (authToken == null) {
-            authToken = BuildConfig.UNSPLASH_CLIENT_ID;
-        }
-        setResultAndFinish(authToken);
-    }
+        setTitle(getString(R.string.backend_unsplash));
 
-    @Override
-    protected String getAuthTokenPreferenceKey() {
-        return PREF_AUTH_TOKEN;
+        mRemoteDataSource = UnsplashDataSource.getInstance(this);
+        if (!mRemoteDataSource.isAuthenticated()) {
+            // TODO: 4/4/2018 implement oauth
+            mRemoteDataSource.setAuthToken(BuildConfig.UNSPLASH_CLIENT_ID);
+        }
+
+        loadAlbums(savedInstanceState == null);
     }
 }

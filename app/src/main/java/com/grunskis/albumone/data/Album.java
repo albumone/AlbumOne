@@ -6,15 +6,17 @@ import com.grunskis.albumone.data.source.local.AlbumOnePersistenceContract;
 
 import org.parceler.Parcel;
 
+import java.util.Date;
+
 @Parcel
 public class Album {
-    // TODO: 3/21/2018 read more about parceler to avoid these warnings
-    String mId;
+    Long mId;
     String mTitle;
     Photo mCoverPhoto;
     String mRemoteId;
     RemoteType mRemoteType;
     DownloadState mDownloadState;
+    Date mUpdatedAt;
 
     public DownloadState getDownloadState() {
         return mDownloadState;
@@ -22,20 +24,25 @@ public class Album {
 
     public Album() {}
 
-    public Album(String title, Photo coverPhoto, String remoteId, RemoteType remoteType) {
-        this(null, title, coverPhoto, remoteId, remoteType);
+    public Album(String title, Photo coverPhoto, String remoteId, RemoteType remoteType,
+                 long updatedAt) {
+        this(null, title, coverPhoto, remoteId, remoteType, updatedAt);
     }
 
-    public Album(String id, String title, Photo coverPhoto, String remoteId, RemoteType remoteType) {
+    public Album(Long id, String title, Photo coverPhoto, String remoteId,
+                 RemoteType remoteType, long updatedAt) {
         mId = id;
         mTitle = title;
         mCoverPhoto = coverPhoto;
         mRemoteId = remoteId;
         mRemoteType = remoteType;
+        if (updatedAt > 0) {
+            mUpdatedAt = new Date(updatedAt);
+        }
     }
 
     public static Album from(Cursor cursor) {
-        String id = cursor.getString(cursor.getColumnIndexOrThrow(
+        long id = cursor.getLong(cursor.getColumnIndexOrThrow(
                 AlbumOnePersistenceContract.AlbumEntry._ID));
         String title = cursor.getString(cursor.getColumnIndexOrThrow(
                         AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_TITLE));
@@ -45,19 +52,21 @@ public class Album {
                 AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_ID));
         RemoteType remoteType = RemoteType.forValue(cursor.getInt(cursor.getColumnIndexOrThrow(
                 AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_REMOTE_TYPE)));
+        long updatedAt = cursor.getLong(cursor.getColumnIndexOrThrow(
+                AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_UPDATED_AT));
 
         Photo coverPhoto = new Photo();
         coverPhoto.setId(coverPhotoId);
 
-        return new Album(id, title, coverPhoto, remoteId, remoteType);
+        return new Album(id, title, coverPhoto, remoteId, remoteType, updatedAt);
     }
 
-    public String getId() {
+    public Long getId() {
         return mId;
     }
 
     public void setId(long id) {
-        mId = String.valueOf(id);
+        mId = id;
     }
 
     public String getTitle() {
@@ -82,6 +91,10 @@ public class Album {
 
     public void setDownloadState(DownloadState downloadState) {
         mDownloadState = downloadState;
+    }
+
+    public Date getUpdatedAt() {
+        return mUpdatedAt;
     }
 
     public enum DownloadState {
