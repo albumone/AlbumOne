@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
     compileSdkVersion 27
     defaultConfig {
@@ -12,21 +16,25 @@ android {
         buildConfigField "String", "UNSPLASH_CLIENT_ID", UNSPLASH_CLIENT_ID
         multiDexEnabled true
     }
+    signingConfigs {
+        release {
+            storeFile file("../keystore.jks")
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storePassword keystoreProperties['storePassword']
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
-    productFlavors {
-        mock {
-            applicationIdSuffix = ".mock"
-        }
-        prod {
-
-        }
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
     }
-    flavorDimensions "default"
 }
 
 dependencies {
