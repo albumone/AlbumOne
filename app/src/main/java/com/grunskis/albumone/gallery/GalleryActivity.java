@@ -1,7 +1,6 @@
 package com.grunskis.albumone.gallery;
 
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -76,11 +75,6 @@ public class GalleryActivity
                 loadAlbumPhotos(page + 1);
             }
         });
-
-        // TODO: 3/27/2018 use theme with version qualifier instead
-        if (Build.VERSION.SDK_INT >= 23) {
-            getWindow().setStatusBarColor(getColor(android.R.color.black));
-        }
 
         RemoteDataSource remoteDataSource = null;
         if (!mAlbum.isLocal()) {
