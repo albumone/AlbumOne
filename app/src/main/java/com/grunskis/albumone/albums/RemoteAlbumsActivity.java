@@ -181,7 +181,6 @@ abstract public class RemoteAlbumsActivity
         mNoAlbumsError.setVisibility(View.INVISIBLE);
 
         for (Album album : albums) {
-            // TODO: 4/10/2018 figure out where 0 comes from..
             if (album.getCoverPhoto().getId() != null && album.getCoverPhoto().getId() > 0) {
                 album.getCoverPhoto().refreshFromDb(this);
             }

@@ -111,7 +111,7 @@ public class UnsplashDataSource implements RemoteDataSource {
 
     @Override
     public void setAuthToken(String authToken) {
-        mSharedPreferences.edit().putString(PREF_AUTH_TOKEN, authToken).apply(); // TODO: 4/10/2018 extract this to a base class
+        mSharedPreferences.edit().putString(PREF_AUTH_TOKEN, authToken).apply();
         mAuthToken = authToken;
     }
 
