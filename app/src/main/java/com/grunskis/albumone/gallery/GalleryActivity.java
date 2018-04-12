@@ -73,7 +73,7 @@ public class GalleryActivity
         mViewPager.addOnPageChangeListener(new ViewPagerLoadMoreListener(mAdapter) {
             @Override
             public void onLoadMore(int page) {
-                loadAlbumPhotos(page);
+                loadAlbumPhotos(page + 1);
             }
         });
 
