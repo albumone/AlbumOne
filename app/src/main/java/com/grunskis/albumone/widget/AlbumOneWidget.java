@@ -6,10 +6,10 @@ import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.widget.RemoteViews;
 
+import com.bumptech.glide.request.target.AppWidgetTarget;
+import com.grunskis.albumone.GlideApp;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.albumdetail.AlbumDetailActivity;
 import com.grunskis.albumone.data.Album;
@@ -32,10 +32,11 @@ public class AlbumOneWidget extends AppWidgetProvider {
 
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_album_one);
 
-        // TODO: 4/6/2018 use glide to load and save cache the bitmap
+        // load photo into the remote image view
+        AppWidgetTarget appWidgetTarget = new AppWidgetTarget(context, R.id.iv_album_cover_photo,
+                views, appWidgetId);
         File file = new File(album.getCoverPhoto().getDownloadPath());
-        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-        views.setImageViewBitmap(R.id.iv_album_cover_photo, bitmap);
+        GlideApp.with(context.getApplicationContext()).asBitmap().load(file).into(appWidgetTarget);
 
         // taping the image will open the album
         Intent intent1 = new Intent(context, AlbumDetailActivity.class);
