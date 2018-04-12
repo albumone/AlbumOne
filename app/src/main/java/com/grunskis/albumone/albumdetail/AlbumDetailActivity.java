@@ -140,6 +140,19 @@ public class AlbumDetailActivity
     }
 
     @Override
+    protected void onStart() {
+        Timber.d("onStart");
+        super.onStart();
+
+        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
+        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_STARTED));
+        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_UPTODATE));
+    }
+
+    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -172,12 +185,6 @@ public class AlbumDetailActivity
         };
 
         mLocalBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
-        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
-                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
-        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
-                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_STARTED));
-        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
-                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_UPTODATE));
 
         mAlbum = Parcels.unwrap(getIntent().getParcelableExtra(EXTRA_ALBUM));
 
@@ -266,11 +273,12 @@ public class AlbumDetailActivity
     }
 
     @Override
-    public void onDestroy() {
+    protected void onPause() {
+        Timber.d("onPause");
         if (mLocalBroadcastManager != null) {
             mLocalBroadcastManager.unregisterReceiver(mBroadcastReceiver);
         }
-        super.onDestroy();
+        super.onPause();
     }
 
     public void onAlbumDownloaded(Album album) {

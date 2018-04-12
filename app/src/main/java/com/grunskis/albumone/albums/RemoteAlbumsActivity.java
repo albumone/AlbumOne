@@ -97,6 +97,16 @@ abstract public class RemoteAlbumsActivity
     }
 
     @Override
+    protected void onStart() {
+        Timber.d("onStart");
+
+        super.onStart();
+
+        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -116,8 +126,6 @@ abstract public class RemoteAlbumsActivity
             }
         };
         mLocalBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
-        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
-                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
 
         mLoading = findViewById(R.id.pb_loading);
         mNoAlbumsError = findViewById(R.id.tv_no_remote_albums);
@@ -210,10 +218,12 @@ abstract public class RemoteAlbumsActivity
     }
 
     @Override
-    public void onDestroy() {
+    protected void onPause() {
+        Timber.d("onPause");
+        super.onPause();
+
         if (mLocalBroadcastManager != null) {
             mLocalBroadcastManager.unregisterReceiver(mBroadcastReceiver);
         }
-        super.onDestroy();
     }
 }

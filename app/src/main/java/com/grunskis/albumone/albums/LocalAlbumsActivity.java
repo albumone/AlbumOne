@@ -41,6 +41,8 @@ import org.parceler.Parcels;
 
 import java.util.List;
 
+import timber.log.Timber;
+
 public class LocalAlbumsActivity
         extends AppCompatActivity
         implements AlbumsClickListener, Callbacks.GetAlbumsCallback,
@@ -97,6 +99,14 @@ public class LocalAlbumsActivity
     }
 
     @Override
+    protected void onStart() {
+        Timber.d("onStart");
+        super.onStart();
+        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -130,8 +140,6 @@ public class LocalAlbumsActivity
             }
         };
         mLocalBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
-        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
-                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
 
         mFABAdd = findViewById(R.id.fab);
         mFABUnsplash = findViewById(R.id.fab_unsplash);
@@ -205,11 +213,12 @@ public class LocalAlbumsActivity
     }
 
     @Override
-    public void onDestroy() {
+    public void onPause() {
+        Timber.d("onPause");
         if (mLocalBroadcastManager != null) {
             mLocalBroadcastManager.unregisterReceiver(mBroadcastReceiver);
         }
-        super.onDestroy();
+        super.onPause();
     }
 
     private void showFABMenu() {
