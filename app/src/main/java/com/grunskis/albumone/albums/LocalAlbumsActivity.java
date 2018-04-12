@@ -347,7 +347,7 @@ public class LocalAlbumsActivity
                 LocalAlbumsActivity.this,
                 AlbumOnePersistenceContract.AlbumEntry.CONTENT_URI,
                 AlbumOnePersistenceContract.AlbumEntry.COLUMNS,
-                null,
+                AlbumOnePersistenceContract.AlbumEntry.COLUMN_NAME_COVER_PHOTO_ID + " is not null",
                 null,
                 null
         );
