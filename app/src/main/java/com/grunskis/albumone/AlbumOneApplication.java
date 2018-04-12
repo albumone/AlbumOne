@@ -1,11 +1,12 @@
 package com.grunskis.albumone;
 
 import android.app.Application;
+import android.support.multidex.MultiDexApplication;
 
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 
-public class AlbumOneApplication extends Application {
+public class AlbumOneApplication extends MultiDexApplication {
     private static GoogleAnalytics sAnalytics;
     private static Tracker sTracker;
 

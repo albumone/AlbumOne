@@ -2,10 +2,12 @@ package com.grunskis.albumone.data.source.remote;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
+import com.grunskis.albumone.TLSSocketFactory;
 import com.grunskis.albumone.data.Album;
 import com.grunskis.albumone.data.Photo;
 import com.grunskis.albumone.data.RemoteType;
@@ -14,16 +16,24 @@ import com.grunskis.albumone.data.source.RemoteDataSource;
 import com.grunskis.albumone.util.StethoUtil;
 
 import java.io.IOException;
+import java.security.KeyStore;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
+import okhttp3.ConnectionSpec;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
+import okhttp3.TlsVersion;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -63,25 +73,30 @@ public class UnsplashDataSource implements RemoteDataSource {
         return INSTANCE;
     }
 
-    private UnsplashApi getApiClient() {
-        OkHttpClient.Builder builder = StethoUtil.addNetworkInterceptor(new OkHttpClient.Builder());
-        builder.interceptors().add(new UnsplashAuthInterceptor());
-        builder.interceptors().add(new Interceptor() {
-            @Override
-            public okhttp3.Response intercept(@NonNull Chain chain) throws IOException {
-                Request.Builder requestBuilder = chain.request().newBuilder();
-                requestBuilder.addHeader("Accept-Version", API_VERSION);
-                return chain.proceed(requestBuilder.build());
+    private static OkHttpClient.Builder enableTls12(OkHttpClient.Builder client) {
+        try {
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                    TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init((KeyStore) null);
+            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+            if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+                throw new IllegalStateException("Unexpected default trust managers:"
+                        + Arrays.toString(trustManagers));
             }
-        });
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(API_BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(builder.build())
-                .build();
-
-        return retrofit.create(UnsplashApi.class);
+            X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+            client.sslSocketFactory(new TLSSocketFactory(), trustManager);
+            ConnectionSpec cs = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+                    .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1)
+                    .build();
+            List<ConnectionSpec> specs = new ArrayList<>();
+            specs.add(cs);
+            specs.add(ConnectionSpec.COMPATIBLE_TLS);
+            specs.add(ConnectionSpec.CLEARTEXT);
+            client.connectionSpecs(specs);
+        } catch (Exception exc) {
+            Timber.e(exc);
+        }
+        return client;
     }
 
     private static long parseTimestamp(String timestamp) {
@@ -336,5 +351,33 @@ public class UnsplashDataSource implements RemoteDataSource {
             Request newRequest = chain.request().newBuilder().header("Authorization", clientId).build();
             return chain.proceed(newRequest);
         }
+    }
+
+    private UnsplashApi getApiClient() {
+        OkHttpClient.Builder builder = StethoUtil.addNetworkInterceptor(new OkHttpClient.Builder());
+
+        // fixing TLS handshake issue as described here https://github.com/santhoshvai/Evlo/issues/2
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&
+                Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+            builder = enableTls12(builder);
+        }
+
+        builder.interceptors().add(new UnsplashAuthInterceptor());
+        builder.interceptors().add(new Interceptor() {
+            @Override
+            public okhttp3.Response intercept(@NonNull Chain chain) throws IOException {
+                Request.Builder requestBuilder = chain.request().newBuilder();
+                requestBuilder.addHeader("Accept-Version", API_VERSION);
+                return chain.proceed(requestBuilder.build());
+            }
+        });
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(API_BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(builder.build())
+                .build();
+
+        return retrofit.create(UnsplashApi.class);
     }
 }
