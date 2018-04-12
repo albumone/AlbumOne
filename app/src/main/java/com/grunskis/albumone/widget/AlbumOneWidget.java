@@ -28,6 +28,8 @@ public class AlbumOneWidget extends AppWidgetProvider {
 
     public static void updateWidget(Context context, AppWidgetManager appWidgetManager,
                                     int appWidgetId, Album album) {
+        Timber.i("Updating widget id: %d albumId: %s", appWidgetId, album.getId());
+
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_album_one);
 
         // TODO: 4/6/2018 use glide to load and save cache the bitmap
@@ -70,7 +72,9 @@ public class AlbumOneWidget extends AppWidgetProvider {
         if (albumId == -1) {
             return null;
         }
-        return DbHelper.getAlbumById(context, albumId);
+        Album album = DbHelper.getAlbumById(context, albumId);
+        album.getCoverPhoto().refreshFromDb(context);
+        return album;
     }
 
     static void deleteWidgetData(Context context, int appWidgetId) {
@@ -84,8 +88,8 @@ public class AlbumOneWidget extends AppWidgetProvider {
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         for (int appWidgetId : appWidgetIds) {
             Album album = loadAlbum(context, appWidgetId);
+            Timber.i("Widget album loaded %s appWidgetId: %d", album, appWidgetId);
             if (album != null) {
-                Timber.i("Updating widget id: %d albumId: %s", appWidgetId, album.getId());
                 updateWidget(context, appWidgetManager, appWidgetId, album);
             }
         }
