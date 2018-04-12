@@ -148,6 +148,8 @@ public class AlbumDetailActivity
                 new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_STARTED));
         mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
                 new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_UPTODATE));
+        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FAILED));
     }
 
     @Override
@@ -176,6 +178,9 @@ public class AlbumDetailActivity
                             break;
                         case DownloadService.BROADCAST_DOWNLOAD_UPTODATE:
                             showAlbumUpToDate();
+                            break;
+                        case DownloadService.BROADCAST_DOWNLOAD_FAILED:
+                            showAlbumRefreshFailed();
                             break;
                     }
                 }
@@ -341,6 +346,15 @@ public class AlbumDetailActivity
 
         Snackbar.make(findViewById(android.R.id.content),
                 getResources().getString(R.string.album_download_started),
+                Snackbar.LENGTH_LONG).show();
+    }
+
+    public void showAlbumRefreshFailed() {
+        mRerfreshAlbumItem.setVisible(true);
+        setDownloadIndicator(false);
+
+        Snackbar.make(findViewById(android.R.id.content),
+                getResources().getString(R.string.album_refresh_failed),
                 Snackbar.LENGTH_LONG).show();
     }
 

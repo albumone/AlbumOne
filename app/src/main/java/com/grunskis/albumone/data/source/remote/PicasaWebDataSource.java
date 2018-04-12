@@ -159,11 +159,12 @@ public class PicasaWebDataSource implements RemoteDataSource {
                 return null;
             }
 
-            AlbumEntry albumEntry = null;
+            AlbumEntry albumEntry;
             try {
                 albumEntry = mPicasaService.getEntry(albumUrl, AlbumEntry.class, ((DateTime) null));
             } catch (IOException | ServiceException e) {
                 Timber.e(e);
+                return null;
             }
             if (albumEntry == null) {
                 return null;

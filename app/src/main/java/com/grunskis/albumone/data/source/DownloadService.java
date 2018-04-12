@@ -46,6 +46,7 @@ public class DownloadService extends IntentService {
     public static final String BROADCAST_DOWNLOAD_STARTED = "BROADCAST_DOWNLOAD_STARTED";
     public static final String BROADCAST_DOWNLOAD_FINISHED = "BROADCAST_DOWNLOAD_FINISHED";
     public static final String BROADCAST_DOWNLOAD_UPTODATE = "BROADCAST_DOWNLOAD_UPTODATE";
+    public static final String BROADCAST_DOWNLOAD_FAILED = "BROADCAST_DOWNLOAD_FAILED";
 
     private ContentResolver mContentResolver;
     private RemoteDataSource mRepository;
@@ -325,6 +326,8 @@ public class DownloadService extends IntentService {
             @Override
             public void onDataNotAvailable() {
                 Timber.e("Failed to get album %s", album.getTitle());
+
+                broadcastDownloadFailed(album);
             }
         });
     }
@@ -343,6 +346,12 @@ public class DownloadService extends IntentService {
 
     private void broadcastDownloadUpToDate(Album album) {
         Intent intent = new Intent(BROADCAST_DOWNLOAD_UPTODATE);
+        intent.putExtra(EXTRA_ALBUM, Parcels.wrap(album));
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private void broadcastDownloadFailed(Album album) {
+        Intent intent = new Intent(BROADCAST_DOWNLOAD_FAILED);
         intent.putExtra(EXTRA_ALBUM, Parcels.wrap(album));
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
