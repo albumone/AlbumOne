@@ -7,6 +7,7 @@ import android.accounts.AccountManagerFuture;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.common.AccountPicker;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
@@ -32,6 +33,15 @@ public class PicasawebAlbumsActivity extends RemoteAlbumsActivity {
         } else {
             authenticate();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // track google photos usage
+        mAnalyticsTracker.setScreenName(getString(R.string.backend_google_photos));
+        mAnalyticsTracker.send(new HitBuilders.ScreenViewBuilder().build());
     }
 
     private void authenticate() {

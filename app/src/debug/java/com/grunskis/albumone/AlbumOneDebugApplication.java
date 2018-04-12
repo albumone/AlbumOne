@@ -1,12 +1,10 @@
 package com.grunskis.albumone;
 
-import android.app.Application;
-
 import com.facebook.stetho.Stetho;
 
 import timber.log.Timber;
 
-public class AlbumOneDebugApplication extends Application {
+public class AlbumOneDebugApplication extends AlbumOneApplication {
     @Override
     public void onCreate() {
         super.onCreate();
@@ -15,5 +13,4 @@ public class AlbumOneDebugApplication extends Application {
 
         Timber.plant(new Timber.DebugTree());
     }
-
 }

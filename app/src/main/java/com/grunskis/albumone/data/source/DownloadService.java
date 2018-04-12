@@ -10,6 +10,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+import com.grunskis.albumone.AlbumOneApplication;
 import com.grunskis.albumone.data.Album;
 import com.grunskis.albumone.data.Photo;
 import com.grunskis.albumone.data.source.local.AlbumOnePersistenceContract;
@@ -61,6 +64,7 @@ public class DownloadService extends IntentService {
         }
     };
     private long mDownloadId;
+    private Tracker mAnalyticsTracker;
 
     public DownloadService() {
         super("DownloadService");
@@ -72,6 +76,7 @@ public class DownloadService extends IntentService {
 
         mContentResolver = getApplicationContext().getContentResolver();
         mClient = new OkHttpClient();
+        mAnalyticsTracker = ((AlbumOneApplication) getApplication()).getDefaultTracker();
     }
 
     @Override
@@ -123,6 +128,11 @@ public class DownloadService extends IntentService {
     }
 
     private void downloadAlbumPhotos(final Album album) {
+        mAnalyticsTracker.send(new HitBuilders.EventBuilder()
+                .setCategory("Action")
+                .setAction("Download album " + album.getRemoteType())
+                .build());
+
         final File albumDir = getPrivateAlbumStorageDir(this, album.getRemoteId());
 
         // download album cover photo

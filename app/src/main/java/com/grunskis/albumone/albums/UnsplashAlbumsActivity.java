@@ -2,6 +2,7 @@ package com.grunskis.albumone.albums;
 
 import android.os.Bundle;
 
+import com.google.android.gms.analytics.HitBuilders;
 import com.grunskis.albumone.BuildConfig;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.data.source.remote.UnsplashDataSource;
@@ -20,5 +21,14 @@ public class UnsplashAlbumsActivity extends RemoteAlbumsActivity {
         }
 
         loadAlbums(savedInstanceState == null);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // track unsplash usage
+        mAnalyticsTracker.setScreenName(getString(R.string.backend_unsplash));
+        mAnalyticsTracker.send(new HitBuilders.ScreenViewBuilder().build());
     }
 }

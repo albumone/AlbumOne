@@ -16,6 +16,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 
+import com.google.android.gms.analytics.Tracker;
+import com.grunskis.albumone.AlbumOneApplication;
 import com.grunskis.albumone.EndlessRecyclerViewScrollListener;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.albumdetail.AlbumDetailActivity;
@@ -40,6 +42,8 @@ abstract public class RemoteAlbumsActivity
     private static final String BUNDLE_RVSTATE = "BUNDLE_RVSTATE";
 
     protected RemoteDataSource mRemoteDataSource;
+    protected Tracker mAnalyticsTracker;
+
     private LocalBroadcastManager mLocalBroadcastManager;
     private BroadcastReceiver mBroadcastReceiver;
     private RecyclerView mRecyclerView;
@@ -94,6 +98,9 @@ abstract public class RemoteAlbumsActivity
         setContentView(R.layout.activity_albums_remote);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        AlbumOneApplication application = (AlbumOneApplication) getApplication();
+        mAnalyticsTracker = application.getDefaultTracker();
 
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
