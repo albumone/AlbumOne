@@ -15,6 +15,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.google.android.gms.analytics.Tracker;
 import com.grunskis.albumone.AlbumOneApplication;
@@ -42,13 +43,17 @@ abstract public class RemoteAlbumsActivity
     private static final String BUNDLE_RVSTATE = "BUNDLE_RVSTATE";
 
     protected RemoteDataSource mRemoteDataSource;
+
     protected Tracker mAnalyticsTracker;
 
     private LocalBroadcastManager mLocalBroadcastManager;
     private BroadcastReceiver mBroadcastReceiver;
+
     private RecyclerView mRecyclerView;
-    private ProgressBar mLoading;
     private AlbumsAdapter mAlbumsAdapter;
+
+    private ProgressBar mLoading;
+    private TextView mNoAlbumsError;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -115,6 +120,7 @@ abstract public class RemoteAlbumsActivity
                 new IntentFilter(DownloadService.BROADCAST_DOWNLOAD_FINISHED));
 
         mLoading = findViewById(R.id.pb_loading);
+        mNoAlbumsError = findViewById(R.id.tv_no_remote_albums);
 
         mRecyclerView = findViewById(R.id.rv_albums);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -164,6 +170,7 @@ abstract public class RemoteAlbumsActivity
     @Override
     public void onAlbumsLoaded(List<Album> albums) {
         setLoadingIndicator(false);
+        mNoAlbumsError.setVisibility(View.INVISIBLE);
 
         for (Album album : albums) {
             // TODO: 4/10/2018 figure out where 0 comes from..
@@ -193,7 +200,9 @@ abstract public class RemoteAlbumsActivity
     @Override
     public void onDataNotAvailable() {
         setLoadingIndicator(false);
-        // TODO: 4/4/2018 show error message
+        if (mAlbumsAdapter.getItemCount() == 0) {
+            mNoAlbumsError.setVisibility(View.VISIBLE);
+        }
     }
 
     public void updateAlbum(Album album) {

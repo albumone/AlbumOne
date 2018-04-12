@@ -19,10 +19,10 @@
 
             <ProgressBar
                 android:id="@+id/download_progressbar"
-                style="@style/AppTheme.DownloadProgressBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
+                style="@style/AppTheme.DownloadProgressBar"
                 android:visibility="invisible" />
 
         </android.support.v7.widget.Toolbar>
@@ -47,6 +47,16 @@
                 android:layout_width="42dp"
                 android:layout_height="42dp"
                 android:layout_gravity="center"
+                android:visibility="invisible" />
+
+            <TextView
+                android:id="@+id/tv_no_photos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/no_photos_error"
+                android:textAlignment="center"
+                android:textSize="20sp"
                 android:visibility="invisible" />
 
         </FrameLayout>

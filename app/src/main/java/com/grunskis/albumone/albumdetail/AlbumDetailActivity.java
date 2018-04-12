@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.grunskis.albumone.DisplayHelpers;
 import com.grunskis.albumone.EndlessRecyclerViewScrollListener;
@@ -64,6 +65,7 @@ public class AlbumDetailActivity
     private BroadcastReceiver mBroadcastReceiver;
     private ProgressBar mDownloadProgressBar;
     private ProgressBar mLoading;
+    private TextView mNoPhotosError;
     private RecyclerView mRecyclerView;
     private PhotosAdapter mPhotosAdapter;
     private int mMenuItemId = -1;
@@ -145,6 +147,7 @@ public class AlbumDetailActivity
 
         mDownloadProgressBar = findViewById(R.id.download_progressbar);
         mLoading = findViewById(R.id.pb_loading);
+        mNoPhotosError = findViewById(R.id.tv_no_photos);
 
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -409,13 +412,19 @@ public class AlbumDetailActivity
     @Override
     public void onAlbumPhotosLoaded(List<Photo> photos) {
         setLoadingIndicator(false);
+        mNoPhotosError.setVisibility(View.INVISIBLE);
         showAlbumPhotos(photos);
     }
 
     @Override
     public void onDataNotAvailable() {
         setLoadingIndicator(false);
-        // TODO: 3/19/2018 show nice error?
+        if (mPhotosAdapter.getItemCount() == 0) {
+            mNoPhotosError.setVisibility(View.VISIBLE);
+            if (mDownloadMenuItem != null) {
+                mDownloadMenuItem.setVisible(false);
+            }
+        }
     }
 
     private static class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.ViewHolder> {

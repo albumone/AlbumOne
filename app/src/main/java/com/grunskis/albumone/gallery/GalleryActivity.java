@@ -164,7 +164,6 @@ public class GalleryActivity
 
     @Override
     public void onDataNotAvailable() {
-        // TODO: 4/4/2018 implement
     }
 
     private void startSlideshow(final List<Photo> photos) {
@@ -172,7 +171,7 @@ public class GalleryActivity
             mSlideshowRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    // TODO: 3/27/2018 add a nice transition
+                    // TODO: 3/27/2018 add a nicer transition
                     int nextItem = mViewPager.getCurrentItem() + 1;
                     if (nextItem >= photos.size()) {
                         nextItem = 0;

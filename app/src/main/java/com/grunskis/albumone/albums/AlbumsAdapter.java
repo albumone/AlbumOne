@@ -47,6 +47,10 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     }
 
     void updateAlbum(Album album) {
+        if (mAlbums == null) {
+            return;
+        }
+
         for (int i = 0; i < mAlbums.size(); i++) {
             Album a = mAlbums.get(i);
             if (a != null && a.getId() != null && a.getId().equals(album.getId())) {

@@ -24,6 +24,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.albumdetail.AlbumDetailActivity;
@@ -62,6 +63,7 @@ public class LocalAlbumsActivity
     private boolean mIsFABOpen;
 
     private ProgressBar mLoading;
+    private TextView mNoAlbumsError;
 
     private RecyclerView mRecyclerView;
     private AlbumsAdapter mAlbumsAdapter;
@@ -176,6 +178,8 @@ public class LocalAlbumsActivity
         });
 
         mLoading = findViewById(R.id.pb_loading);
+        mNoAlbumsError = findViewById(R.id.tv_no_local_albums);
+
         mLoaderManager = getSupportLoaderManager();
 
         mRecyclerView = findViewById(R.id.rv_albums);
@@ -265,6 +269,7 @@ public class LocalAlbumsActivity
     @Override
     public void onAlbumsLoaded(List<Album> albums) {
         setLoadingIndicator(false);
+        mNoAlbumsError.setVisibility(View.INVISIBLE);
 
         for (Album album : albums) {
             // TODO: 4/10/2018 figure out where 0 comes from..
@@ -315,7 +320,7 @@ public class LocalAlbumsActivity
     @Override
     public void onDataNotAvailable() {
         setLoadingIndicator(false);
-        // TODO: 4/4/2018 show error message
+        mNoAlbumsError.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -343,7 +348,12 @@ public class LocalAlbumsActivity
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
         if (data != null) {
-            onAlbumsLoaded(LocalDataSource.Albums.from(data));
+            List<Album> albums = LocalDataSource.Albums.from(data);
+            if (albums != null && albums.size() > 0) {
+                onAlbumsLoaded(albums);
+            } else {
+                onDataNotAvailable();
+            }
         } else {
             onDataNotAvailable();
         }

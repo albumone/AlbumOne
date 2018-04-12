@@ -157,7 +157,6 @@ public class UnsplashDataSource implements RemoteDataSource {
                     } catch (IOException e) {
                         Timber.e(e);
                     }
-                    // TODO: 3/22/2018 add error callback
                     callback.onDataNotAvailable();
                 }
             }
