@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 
+import com.google.gdata.client.Query;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.DateTime;
 import com.google.gdata.data.media.mediarss.MediaContent;
@@ -37,6 +38,9 @@ public class PicasaWebDataSource implements RemoteDataSource {
     private static final String API_ENTRY_PREFIX
             = "https://picasaweb.google.com/data/entry/api/user/default/";
 
+    private static final int MAX_RESULTS = 10;
+    private static final String MAX_WIDTH = "1280";
+
     private static PicasaWebDataSource INSTANCE = null;
 
     private PicasawebService mPicasaClient;
@@ -64,8 +68,12 @@ public class PicasaWebDataSource implements RemoteDataSource {
         Photo coverPhoto = null;
         try {
             // HACK: showing album only in one of the first 10 entries is an image (not video)
-            URL feedUrl = new URL(albumEntry.getFeedLink().getHref() + "?start-index=1&max-results=10&imgmax=1280");
-            AlbumFeed albumFeed = service.getFeed(feedUrl, AlbumFeed.class);
+            Query query = new Query(new URL(albumEntry.getFeedLink().getHref()));
+            query.setStartIndex(1);
+            query.setMaxResults(MAX_RESULTS);
+            query.addCustomParameter(new Query.CustomParameter("imgmax", MAX_WIDTH));
+
+            AlbumFeed albumFeed = service.getFeed(query, AlbumFeed.class);
             List<GphotoEntry> entries = albumFeed.getEntries();
             if (entries != null && entries.size() > 0) {
                 for (GphotoEntry photoEntry : entries) {
@@ -98,7 +106,6 @@ public class PicasaWebDataSource implements RemoteDataSource {
 
     @Override
     public boolean isAuthenticated() {
-        // TODO: 4/10/2018 check validity of the token
         return getAuthToken() != null;
     }
 
@@ -144,9 +151,7 @@ public class PicasaWebDataSource implements RemoteDataSource {
         protected Album doInBackground(Void... voids) {
             URL albumUrl = null;
             try {
-                // TODO: 3/21/2018 figure out how to use Query
-                // to set query parameters instead of hard-coding them in the url
-                albumUrl = new URL(API_ENTRY_PREFIX + "albumid/" + mAlbumId + "?thumbsize=1280");
+                albumUrl = new URL(API_ENTRY_PREFIX + "albumid/" + mAlbumId);
             } catch (MalformedURLException e) {
                 Timber.e(e);
             }
@@ -194,26 +199,25 @@ public class PicasaWebDataSource implements RemoteDataSource {
         GetAlbumsTask(PicasawebService service, Callbacks.GetAlbumsCallback callback, int page) {
             mAlbumsCallback = callback;
             mPicassaService = service;
-            mStartIndex = (page - 1) * 10 + 1;
+            mStartIndex = (page - 1) * MAX_RESULTS + 1;
         }
 
         @Override
         protected List<Album> doInBackground(Void... voids) {
-            URL albumUrl = null;
+            Query albumQuery;
             try {
-                // TODO: 3/21/2018 figure out how to use Query
-                // to set query parameters instead of hard-coding them in the url
-                albumUrl = new URL(API_FEED_PREFIX + "?thumbsize=1280&start-index=" + String.valueOf(mStartIndex) + "&max-results=10");
+                albumQuery = new Query(new URL(API_FEED_PREFIX));
+                albumQuery.setStartIndex(mStartIndex);
+                albumQuery.setMaxResults(MAX_RESULTS);
+                albumQuery.addCustomParameter(new Query.CustomParameter("thumbsize", MAX_WIDTH));
             } catch (MalformedURLException e) {
                 Timber.e(e);
-            }
-            if (albumUrl == null) {
                 return null;
             }
 
             UserFeed userFeed = null;
             try {
-                userFeed = mPicassaService.getFeed(albumUrl, UserFeed.class);
+                userFeed = mPicassaService.query(albumQuery, UserFeed.class);
             } catch (IOException | ServiceException e) {
                 Timber.e(e);
             }
@@ -254,24 +258,27 @@ public class PicasaWebDataSource implements RemoteDataSource {
         GetAlbumPhotosTask(PicasawebService service, Callbacks.GetAlbumPhotosCallback callback, int page) {
             mPicasaService = service;
             mGetAlbumPhotosCallback = callback;
-            mStartIndex = (page - 1) * 10 + 1;
+            mStartIndex = (page - 1) * MAX_RESULTS + 1;
         }
 
         @Override
         protected List<Photo> doInBackground(Album... albums) {
-            URL albumUrl = null;
+            Query albumQuery = null;
             try {
-                albumUrl = new URL(API_FEED_PREFIX + "albumid/" + albums[0].getRemoteId() + "?max-results=10&imgmax=1280&start-index=" + String.valueOf(mStartIndex));
+                URL url = new URL(API_FEED_PREFIX + "albumid/" + albums[0].getRemoteId());
+
+                albumQuery = new Query(url);
+                albumQuery.setStartIndex(mStartIndex);
+                albumQuery.setMaxResults(MAX_RESULTS);
+                albumQuery.addCustomParameter(new Query.CustomParameter("imgmax", MAX_WIDTH));
             } catch (MalformedURLException e) {
                 Timber.e(e);
-            }
-            if (albumUrl == null) {
                 return null;
             }
 
             AlbumFeed albumFeed = null;
             try {
-                albumFeed = mPicasaService.getFeed(albumUrl, AlbumFeed.class);
+                albumFeed = mPicasaService.getFeed(albumQuery, AlbumFeed.class);
             } catch (IOException | ServiceException e) {
                 Timber.e(e);
             }

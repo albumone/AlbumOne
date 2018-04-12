@@ -165,7 +165,6 @@ public class GalleryActivity
             mSlideshowRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    // TODO: 3/27/2018 add a nicer transition
                     int nextItem = mViewPager.getCurrentItem() + 1;
                     if (nextItem >= photos.size()) {
                         nextItem = 0;
