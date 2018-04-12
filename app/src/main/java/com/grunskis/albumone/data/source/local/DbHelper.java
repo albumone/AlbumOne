@@ -114,8 +114,7 @@ public class DbHelper {
         return photo;
     }
 
-    public static Photo getPhotoByRemoteId(Context context, String remoteId) {
-        ContentResolver contentResolver = context.getContentResolver();
+    public static Photo getPhotoByRemoteId(ContentResolver contentResolver, String remoteId) {
         Cursor cursor = contentResolver.query(
                 AlbumOnePersistenceContract.PhotoEntry.CONTENT_URI,
                 AlbumOnePersistenceContract.PhotoEntry.COLUMNS,
@@ -185,5 +184,4 @@ public class DbHelper {
         }
         return download;
     }
-
 }

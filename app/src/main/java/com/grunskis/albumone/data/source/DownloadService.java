@@ -60,7 +60,8 @@ public class DownloadService extends IntentService {
 
         @Override
         public void onPhotoDownloadError(Photo photo) {
-            Timber.e("Failed to download photo! id: %s url: %s", photo.getRemoteId(), photo.getSmallUri());
+            Timber.e("Failed to download photo! id: %s url: %s", photo.getRemoteId(),
+                    photo.getSmallUri());
         }
     };
     private long mDownloadId;
@@ -115,10 +116,12 @@ public class DownloadService extends IntentService {
 
         mDownloadId = DbHelper.createDownloadEntry(mContentResolver, album);
 
+        File albumDir = getPrivateAlbumStorageDir(this, album.getRemoteId());
+
         if (isRefresh) {
-            refreshAlbumPhotos(album);
+            refreshAlbumPhotos(albumDir, album);
         } else {
-            downloadAlbumPhotos(album);
+            downloadAlbumPhotos(albumDir, album);
         }
     }
 
@@ -127,13 +130,11 @@ public class DownloadService extends IntentService {
         return Environment.MEDIA_MOUNTED.equals(state);
     }
 
-    private void downloadAlbumPhotos(final Album album) {
+    private void downloadAlbumPhotos(final File albumDir, final Album album) {
         mAnalyticsTracker.send(new HitBuilders.EventBuilder()
                 .setCategory("Action")
                 .setAction("Download album " + album.getRemoteType())
                 .build());
-
-        final File albumDir = getPrivateAlbumStorageDir(this, album.getRemoteId());
 
         // download album cover photo
         Photo coverPhoto = album.getCoverPhoto();
@@ -179,9 +180,7 @@ public class DownloadService extends IntentService {
     private File getPrivateAlbumStorageDir(Context context, String albumTitle) {
         File file = new File(context.getExternalFilesDir(
                 Environment.DIRECTORY_PICTURES), albumTitle);
-        if (!file.mkdirs()) {
-            Timber.e("Directory not created?");
-        }
+        file.mkdirs();
         return file;
     }
 
@@ -246,10 +245,7 @@ public class DownloadService extends IntentService {
         });
     }
 
-    private void refreshAlbumPhotos(final Album album) {
-        // TODO: 4/11/2018 move this out somewhere
-        final File albumDir = getPrivateAlbumStorageDir(this, album.getRemoteId());
-
+    private void refreshAlbumPhotos(final File albumDir, final Album album) {
         // create a list of photo remote IDs we currently have in the DB
         final List<String> photoIds = new ArrayList<>();
         for (Photo photo : DbHelper.getAlbumPhotosByAlbumId(this, album.getId())) {
@@ -273,7 +269,7 @@ public class DownloadService extends IntentService {
                                 }
 
                                 Photo existingPhoto = DbHelper.getPhotoByRemoteId(
-                                        DownloadService.this, remoteId);
+                                        mContentResolver, remoteId);
                                 if (existingPhoto == null) {
                                     Timber.i("Downloading new photo remoteId: %s uri: %s",
                                             remoteId, photo.getSmallUri());
@@ -285,8 +281,13 @@ public class DownloadService extends IntentService {
                         @Override
                         public void downloadFinished(Album album) {
                             for (String remoteId : photoIds) {
-                                Timber.w("Deleting photo remoteId: %s", remoteId);
-                                // TODO: 4/10/2018 delete files
+                                Timber.i("Deleting photo remoteId: %s", remoteId);
+                                Photo photo = DbHelper.getPhotoByRemoteId(
+                                        mContentResolver, remoteId);
+                                File file = new File(photo.getDownloadPath());
+                                if (file.delete()) {
+                                    Timber.i("Deleting photo file %s", file.getAbsoluteFile());
+                                }
                                 DbHelper.deletePhotoByRemoteId(mContentResolver, remoteId);
                             }
 
@@ -294,7 +295,7 @@ public class DownloadService extends IntentService {
                             Photo coverPhoto = otherAlbum.getCoverPhoto();
                             if (!coverPhoto.getRemoteId().equals(album.getCoverPhoto().getRemoteId())) {
                                 Photo p = DbHelper.getPhotoByRemoteId(
-                                        DownloadService.this, coverPhoto.getRemoteId());
+                                        mContentResolver, coverPhoto.getRemoteId());
                                 if (p != null) {
                                     Timber.i("Setting a new cover photo for album title: %s",
                                             otherAlbum.getTitle());
