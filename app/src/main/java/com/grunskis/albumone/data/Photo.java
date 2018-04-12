@@ -13,26 +13,18 @@ import org.parceler.Parcel;
 public class Photo {
     Long mId;
     Album mAlbum;
-    Uri mSmallUri;
+    Uri mUri;
     int mWidth;
     int mHeight;
-    String mDownloadPath;
     String mRemoteId;
 
     public Photo() {
     }
 
-    public Photo(Long id, Album album, String smallUri, int width, int height, String remoteId) {
+    public Photo(Long id, Album album, String uri, int width, int height, String remoteId) {
         mId = id;
         mAlbum = album;
-        // TODO: 4/6/2018 use uris also for local files
-        if (smallUri != null) {
-            if (smallUri.startsWith("http")) {
-                mSmallUri = Uri.parse(smallUri);
-            } else {
-                mDownloadPath = smallUri;
-            }
-        }
+        mUri = Uri.parse(uri);
         mWidth = width;
         mHeight = height;
         mRemoteId = remoteId;
@@ -64,8 +56,8 @@ public class Photo {
         mId = id;
     }
 
-    public Uri getSmallUri() {
-        return mSmallUri;
+    public Uri getUri() {
+        return mUri;
     }
 
     public Album getAlbum() {
@@ -84,31 +76,26 @@ public class Photo {
         return mHeight;
     }
 
-    public String getFilename() {
-        String format = mSmallUri.getQueryParameter("fm");
-        if (format == null) {
-            format = "jpg";
-        }
-        return mRemoteId + "." + format;
-    }
-
-    public String getDownloadPath() {
-        return mDownloadPath;
-    }
-
-    public void setDownloadPath(String path) {
-        mDownloadPath = path;
+    public void setUri(Uri uri) {
+        mUri = uri;
     }
 
     public String getRemoteId() {
         return mRemoteId;
     }
 
+    public String getFilename() {
+        String format = mUri.getQueryParameter("fm");
+        if (format == null) {
+            format = "jpg";
+        }
+        return mRemoteId + "." + format;
+    }
+
     public void refreshFromDb(Context context) {
         Photo photo = DbHelper.getPhotoById(context, mId);
 
-        mSmallUri = photo.getSmallUri();
-        mDownloadPath = photo.getDownloadPath();
+        mUri = photo.getUri();
         mWidth = photo.getWidth();
         mHeight = photo.getHeight();
         mRemoteId = photo.getRemoteId();

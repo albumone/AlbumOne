@@ -86,7 +86,7 @@ public class Album {
     }
 
     public boolean isLocal() {
-        return mCoverPhoto.getDownloadPath() != null;
+        return mCoverPhoto.getUri().toString().startsWith("file:");
     }
 
     public void setDownloadState(DownloadState downloadState) {

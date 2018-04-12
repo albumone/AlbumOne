@@ -25,7 +25,8 @@ public class AlbumValues {
         ContentValues values = new ContentValues();
         Album album = photo.getAlbum();
         values.put(AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_ALBUM_ID, album.getId());
-        values.put(AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_URL, photo.getDownloadPath());
+        values.put(AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_URL,
+                photo.getUri().toString());
         values.put(AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_WIDTH, photo.getWidth());
         values.put(AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_HEIGHT, photo.getHeight());
         values.put(AlbumOnePersistenceContract.PhotoEntry.COLUMN_NAME_REMOTE_ID,

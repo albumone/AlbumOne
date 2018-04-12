@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.widget.RemoteViews;
 
 import com.bumptech.glide.request.target.AppWidgetTarget;
@@ -17,8 +18,6 @@ import com.grunskis.albumone.data.source.local.DbHelper;
 import com.grunskis.albumone.gallery.GalleryActivity;
 
 import org.parceler.Parcels;
-
-import java.io.File;
 
 import timber.log.Timber;
 
@@ -35,8 +34,8 @@ public class AlbumOneWidget extends AppWidgetProvider {
         // load photo into the remote image view
         AppWidgetTarget appWidgetTarget = new AppWidgetTarget(context, R.id.iv_album_cover_photo,
                 views, appWidgetId);
-        File file = new File(album.getCoverPhoto().getDownloadPath());
-        GlideApp.with(context.getApplicationContext()).asBitmap().load(file).into(appWidgetTarget);
+        Uri uri = album.getCoverPhoto().getUri();
+        GlideApp.with(context.getApplicationContext()).asBitmap().load(uri).into(appWidgetTarget);
 
         // taping the image will open the album
         Intent intent1 = new Intent(context, AlbumDetailActivity.class);

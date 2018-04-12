@@ -2,7 +2,6 @@ package com.grunskis.albumone.albums;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
@@ -20,7 +19,6 @@ import com.grunskis.albumone.data.Album;
 import com.grunskis.albumone.data.Photo;
 import com.grunskis.albumone.data.RemoteType;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,14 +84,7 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
         holder.itemView.getLayoutParams().height = DisplayHelpers.calculateOptimalPhotoHeight(
                 mDisplayWidth, coverPhoto);
 
-        Uri uri;
-        String localPath = coverPhoto.getDownloadPath();
-        if (localPath != null && localPath.length() > 0) {
-            uri = Uri.fromFile(new File(localPath));
-        } else {
-            uri = coverPhoto.getSmallUri();
-        }
-        GlideApp.with(mContext).load(uri).into(holder.mCoverPhoto);
+        GlideApp.with(mContext).load(coverPhoto.getUri()).into(holder.mCoverPhoto);
 
         holder.mTitle.setText(album.getTitle());
 

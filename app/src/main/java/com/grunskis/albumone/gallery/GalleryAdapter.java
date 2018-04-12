@@ -1,7 +1,6 @@
 package com.grunskis.albumone.gallery;
 
 import android.content.Context;
-import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v4.view.PagerAdapter;
 import android.view.LayoutInflater;
@@ -13,7 +12,6 @@ import com.grunskis.albumone.GlideApp;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.data.Photo;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,14 +48,7 @@ class GalleryAdapter extends PagerAdapter {
         PhotoView photoView = layout.findViewById(R.id.photo);
 
         Photo photo = mPhotos.get(position);
-
-        Uri uri;
-        if (photo.getDownloadPath() != null) {
-            uri = Uri.fromFile(new File(photo.getDownloadPath()));
-        } else {
-            uri = photo.getSmallUri();
-        }
-        GlideApp.with(mContext).load(uri).into(photoView);
+        GlideApp.with(mContext).load(photo.getUri()).into(photoView);
 
         photoView.setOnClickListener(mClickListener);
 

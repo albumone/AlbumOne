@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -52,7 +53,7 @@ public class DownloadService extends IntentService {
     private PhotoDownloadCallback photoDownloadCallback = new PhotoDownloadCallback() {
         @Override
         public void onPhotoDownloaded(Photo photo, String path) {
-            photo.setDownloadPath(path);
+            photo.setUri(Uri.parse("file://" + path));
 
             long id = DbHelper.createPhoto(mContentResolver, photo);
             photo.setId(id);
@@ -61,7 +62,7 @@ public class DownloadService extends IntentService {
         @Override
         public void onPhotoDownloadError(Photo photo) {
             Timber.e("Failed to download photo! id: %s url: %s", photo.getRemoteId(),
-                    photo.getSmallUri());
+                    photo.getUri());
         }
     };
     private long mDownloadId;
@@ -212,7 +213,7 @@ public class DownloadService extends IntentService {
                                final PhotoDownloadCallback callback) {
         final File photoFile = new File(directory, photo.getFilename());
 
-        Request request = new Request.Builder().url(photo.getSmallUri().toString()).build();
+        Request request = new Request.Builder().url(photo.getUri().toString()).build();
 
         mClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -272,7 +273,7 @@ public class DownloadService extends IntentService {
                                         mContentResolver, remoteId);
                                 if (existingPhoto == null) {
                                     Timber.i("Downloading new photo remoteId: %s uri: %s",
-                                            remoteId, photo.getSmallUri());
+                                            remoteId, photo.getUri());
                                     downloadPhoto(albumDir, photo, photoDownloadCallback);
                                 }
                             }
@@ -284,7 +285,7 @@ public class DownloadService extends IntentService {
                                 Timber.i("Deleting photo remoteId: %s", remoteId);
                                 Photo photo = DbHelper.getPhotoByRemoteId(
                                         mContentResolver, remoteId);
-                                File file = new File(photo.getDownloadPath());
+                                File file = new File(photo.getUri().getPath());
                                 if (file.delete()) {
                                     Timber.i("Deleting photo file %s", file.getAbsoluteFile());
                                 }

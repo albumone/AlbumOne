@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -44,7 +43,6 @@ import com.grunskis.albumone.gallery.GalleryActivity;
 
 import org.parceler.Parcels;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -483,14 +481,7 @@ public class AlbumDetailActivity
             holder.itemView.getLayoutParams().height = DisplayHelpers.calculateOptimalPhotoHeight(
                     mDisplayWidth, photo);
 
-            Uri uri;
-            String localPath = photo.getDownloadPath();
-            if (localPath != null && localPath.length() > 0) {
-                uri = Uri.fromFile(new File(localPath));
-            } else {
-                uri = photo.getSmallUri();
-            }
-            GlideApp.with(mContext).load(uri).into(holder.mPhoto);
+            GlideApp.with(mContext).load(photo.getUri()).into(holder.mPhoto);
 
             holder.mPhoto.setOnClickListener(new View.OnClickListener() {
                 @Override
