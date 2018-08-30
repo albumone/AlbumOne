@@ -131,6 +131,11 @@ public class UnsplashDataSource implements RemoteDataSource {
     }
 
     @Override
+    public boolean supportsPaging() {
+        return true;
+    }
+
+    @Override
     public boolean isAuthenticated() {
         return getAuthToken() != null;
     }

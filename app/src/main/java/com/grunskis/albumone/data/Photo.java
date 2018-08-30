@@ -95,9 +95,11 @@ public class Photo {
     public void refreshFromDb(Context context) {
         Photo photo = DbHelper.getPhotoById(context, mId);
 
-        mUri = photo.getUri();
-        mWidth = photo.getWidth();
-        mHeight = photo.getHeight();
-        mRemoteId = photo.getRemoteId();
+        if (photo != null) {
+            mUri = photo.getUri();
+            mWidth = photo.getWidth();
+            mHeight = photo.getHeight();
+            mRemoteId = photo.getRemoteId();
+        }
     }
 }

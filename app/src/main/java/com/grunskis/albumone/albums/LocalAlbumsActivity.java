@@ -62,6 +62,7 @@ public class LocalAlbumsActivity
     private FloatingActionButton mFABAdd;
     private FloatingActionButton mFABUnsplash;
     private FloatingActionButton mFABGooglePhotos;
+    private FloatingActionButton mFABSnapline;
     private boolean mIsFABOpen;
 
     private ProgressBar mLoading;
@@ -144,6 +145,7 @@ public class LocalAlbumsActivity
         mFABAdd = findViewById(R.id.fab);
         mFABUnsplash = findViewById(R.id.fab_unsplash);
         mFABGooglePhotos = findViewById(R.id.fab_gphotos);
+        mFABSnapline = findViewById(R.id.fab_snapline);
         mIsFABOpen = false;
 
         mFABAdd.setOnClickListener(new View.OnClickListener() {
@@ -161,6 +163,7 @@ public class LocalAlbumsActivity
             mFABAdd.setVisibility(View.GONE);
             mFABUnsplash.setVisibility(View.GONE);
             mFABGooglePhotos.setVisibility(View.GONE);
+            mFABSnapline.setVisibility(View.GONE);
         }
 
         mFABUnsplash.setOnClickListener(new View.OnClickListener() {
@@ -181,6 +184,16 @@ public class LocalAlbumsActivity
 
                 Intent intent = new Intent(LocalAlbumsActivity.this,
                         PicasawebAlbumsActivity.class);
+                startActivity(intent);
+            }
+        });
+        mFABSnapline.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                closeFABMenu();
+
+                Intent intent = new Intent(LocalAlbumsActivity.this,
+                        SnaplineAlbumsActivity.class);
                 startActivity(intent);
             }
         });
@@ -227,12 +240,14 @@ public class LocalAlbumsActivity
         float fabTransY = getResources().getDimension(R.dimen.fab_translation_y);
         mFABUnsplash.animate().translationY(-fabTransY);
         mFABGooglePhotos.animate().translationY(-fabTransY * 2);
+        mFABSnapline.animate().translationY(-fabTransY * 3);
         mFABAdd.animate().rotationBy(45);
     }
 
     private void closeFABMenu() {
         mFABUnsplash.animate().translationY(0);
         mFABGooglePhotos.animate().translationY(0);
+        mFABSnapline.animate().translationY(0);
         mFABAdd.animate().rotationBy(-45);
 
         mIsFABOpen = false;

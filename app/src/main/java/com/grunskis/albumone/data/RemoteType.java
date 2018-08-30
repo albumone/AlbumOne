@@ -5,7 +5,8 @@ import java.util.Map;
 
 public enum RemoteType {
     GOOGLE_PHOTOS(1),
-    UNSPLASH(2);
+    UNSPLASH(2),
+    SNAPLINE(3);
 
     private static final Map<Integer, RemoteType> typesByValue = new HashMap<>();
 

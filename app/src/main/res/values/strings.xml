@@ -25,4 +25,5 @@
     <string name="no_photos_error">There are no photos in this album.\nThis could also be a server error!\nPlease try again later…</string>
     <string name="no_remote_albums">There are no albums to show.\nThis could also be a server error!\nPlease try again later…</string>
     <string name="album_refresh_failed">Album refresh failed! Try again later…</string>
+    <string name="backend_snapline">Snapline</string>
 </resources>

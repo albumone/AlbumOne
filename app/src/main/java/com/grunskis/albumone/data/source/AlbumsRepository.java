@@ -39,4 +39,8 @@ public class AlbumsRepository {
             }
         });
     }
+
+    public boolean supportsPaging() {
+        return mRemoteDataSource.supportsPaging();
+    }
 }

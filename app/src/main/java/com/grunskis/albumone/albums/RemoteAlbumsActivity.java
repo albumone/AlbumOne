@@ -172,6 +172,10 @@ abstract public class RemoteAlbumsActivity
     }
 
     public void getAlbums(final int page, final Callbacks.GetAlbumsCallback callback) {
+        // TODO this shouldn't be called if backend doesn't support paging
+        if (page > 1 && !mRemoteDataSource.supportsPaging()) {
+            return;
+        }
         mRemoteDataSource.getAlbums(page, callback);
     }
 

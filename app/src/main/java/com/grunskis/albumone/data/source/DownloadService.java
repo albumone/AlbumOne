@@ -19,6 +19,7 @@ import com.grunskis.albumone.data.Photo;
 import com.grunskis.albumone.data.source.local.AlbumOnePersistenceContract;
 import com.grunskis.albumone.data.source.local.DbHelper;
 import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
+import com.grunskis.albumone.data.source.remote.SnaplineDataSource;
 import com.grunskis.albumone.data.source.remote.UnsplashDataSource;
 
 import org.parceler.Parcels;
@@ -103,6 +104,10 @@ public class DownloadService extends IntentService {
 
             case UNSPLASH:
                 mRepository = UnsplashDataSource.getInstance(this);
+                break;
+
+            case SNAPLINE:
+                mRepository = SnaplineDataSource.getInstance(this);
                 break;
 
             default:

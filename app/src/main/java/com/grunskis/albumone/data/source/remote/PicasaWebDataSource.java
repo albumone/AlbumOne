@@ -121,6 +121,11 @@ public class PicasaWebDataSource implements RemoteDataSource {
     }
 
     @Override
+    public boolean supportsPaging() {
+        return true;
+    }
+
+    @Override
     public void getAlbum(String remoteId, Callbacks.GetAlbumCallback callback) {
         new GetAlbumTask(mPicasaClient, remoteId, callback).execute();
     }

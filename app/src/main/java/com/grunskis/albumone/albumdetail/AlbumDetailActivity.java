@@ -38,6 +38,7 @@ import com.grunskis.albumone.data.source.LoaderProvider;
 import com.grunskis.albumone.data.source.RemoteDataSource;
 import com.grunskis.albumone.data.source.local.LocalDataSource;
 import com.grunskis.albumone.data.source.remote.PicasaWebDataSource;
+import com.grunskis.albumone.data.source.remote.SnaplineDataSource;
 import com.grunskis.albumone.data.source.remote.UnsplashDataSource;
 import com.grunskis.albumone.gallery.GalleryActivity;
 
@@ -212,6 +213,10 @@ public class AlbumDetailActivity
                 case UNSPLASH:
                     remoteDataSource = UnsplashDataSource.getInstance(this);
                     break;
+
+                case SNAPLINE:
+                    remoteDataSource = SnaplineDataSource.getInstance(this);
+                    break;
             }
         }
 
@@ -225,7 +230,7 @@ public class AlbumDetailActivity
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(layoutManager);
 
-        if (!mAlbum.isLocal()) {
+        if (!mAlbum.isLocal() && mRepository.supportsPaging()) {
             mRecyclerView.addOnScrollListener(new EndlessRecyclerViewScrollListener(layoutManager) {
                 @Override
                 public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {

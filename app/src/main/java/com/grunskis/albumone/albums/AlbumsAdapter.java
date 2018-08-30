@@ -36,12 +36,14 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     }
 
     void addAlbums(List<Album> albums) {
-        if (mAlbums == null) {
-            mAlbums = new ArrayList<>(albums);
-        } else {
-            mAlbums.addAll(albums);
+        if (albums != null) {
+            if (mAlbums == null) {
+                mAlbums = new ArrayList<>(albums);
+            } else {
+                mAlbums.addAll(albums);
+            }
+            notifyDataSetChanged();
         }
-        notifyDataSetChanged();
     }
 
     void updateAlbum(Album album) {
