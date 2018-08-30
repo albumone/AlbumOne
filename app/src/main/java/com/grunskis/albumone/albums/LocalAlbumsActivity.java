@@ -26,6 +26,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.grunskis.albumone.BuildConfig;
 import com.grunskis.albumone.R;
 import com.grunskis.albumone.albumdetail.AlbumDetailActivity;
 import com.grunskis.albumone.data.Album;
@@ -36,6 +37,10 @@ import com.grunskis.albumone.data.source.local.AlbumOnePersistenceContract;
 import com.grunskis.albumone.data.source.local.DbHelper;
 import com.grunskis.albumone.data.source.local.LocalDataSource;
 import com.grunskis.albumone.widget.AlbumOneWidget;
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.analytics.Analytics;
+import com.microsoft.appcenter.crashes.Crashes;
+import com.microsoft.appcenter.distribute.Distribute;
 
 import org.parceler.Parcels;
 
@@ -114,6 +119,9 @@ public class LocalAlbumsActivity
         setContentView(R.layout.activity_albums);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        AppCenter.start(getApplication(), BuildConfig.APPCENTER_SECRET_KEY,
+                Analytics.class, Crashes.class, Distribute.class);
 
         createSyncAccount(this);
 

@@ -3,7 +3,8 @@
 Create a `gradle.properties` file and add Unsplash API client ID constant:
 
 ```
-UNSPLASH_CLIENT_ID="......"
+UNSPLASH_CLIENT_ID="..."
+APPCENTER_SECRET_KEY="..."
 ```
 
 Create a `keystore.properties` file and add the following keys:

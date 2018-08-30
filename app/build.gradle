@@ -10,10 +10,11 @@ android {
         applicationId "com.grunskis.albumone"
         minSdkVersion 19
         targetSdkVersion 27
-        versionCode 1
+        versionCode 2
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "UNSPLASH_CLIENT_ID", UNSPLASH_CLIENT_ID
+        buildConfigField "String", "APPCENTER_SECRET_KEY", APPCENTER_SECRET_KEY
         multiDexEnabled true
     }
     signingConfigs {
@@ -71,4 +72,9 @@ dependencies {
     implementation 'com.github.chrisbanes:PhotoView:2.1.3'
 
     implementation 'com.android.support:multidex:1.0.3'
+
+    def appCenterSdkVersion = '1.8.0'
+    implementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
+    implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
+    implementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
 }
